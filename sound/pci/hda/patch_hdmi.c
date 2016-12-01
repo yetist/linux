@@ -3207,6 +3207,13 @@ static int patch_i915_cpt_hdmi(struct hda_codec *codec)
 	return parse_intel_hdmi(codec);
 }
 
+/* Loongson LS7A2000 */
+static int patch_ls7a_hdmi(struct hda_codec *codec)
+{
+	codec->bus->core.needs_damn_long_delay = 1;
+	return patch_generic_hdmi(codec);
+}
+
 /*
  * Shared non-generic implementations
  */
@@ -4493,6 +4500,7 @@ static int patch_via_hdmi(struct hda_codec *codec)
  * patch entries
  */
 static const struct hda_device_id snd_hda_id_hdmi[] = {
+HDA_CODEC_ENTRY(0x00147a47, "Loongson HDMI",	patch_ls7a_hdmi),
 HDA_CODEC_ENTRY(0x1002793c, "RS600 HDMI",	patch_atihdmi),
 HDA_CODEC_ENTRY(0x10027919, "RS600 HDMI",	patch_atihdmi),
 HDA_CODEC_ENTRY(0x1002791a, "RS690/780 HDMI",	patch_atihdmi),
