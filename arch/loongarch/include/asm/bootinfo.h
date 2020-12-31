@@ -33,6 +33,7 @@ struct loongson_system_configuration {
 	int cores_per_node;
 	int cores_per_package;
 	const char *cpuname;
+	unsigned long suspend_addr;
 };
 
 extern u64 efi_system_table;
