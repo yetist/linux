@@ -233,6 +233,10 @@ config CC_HAS_LSX_VECTORS
 config CC_HAS_LASX_VECTORS
 	def_bool $(cc-option,-mlasx)
 
+config HARDWARE_WATCHPOINTS
+	bool
+	default y
+
 menu "Kernel type and options"
 
 source "kernel/Kconfig.hz"
