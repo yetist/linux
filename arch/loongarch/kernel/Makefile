@@ -25,6 +25,8 @@ obj-$(CONFIG_NUMA)		+= numa.o
 
 obj-$(CONFIG_MAGIC_SYSRQ)	+= sysrq.o
 
+obj-$(CONFIG_RELOCATABLE)	+= relocate.o
+
 obj-$(CONFIG_UNWINDER_GUESS)	+= unwind_guess.o
 obj-$(CONFIG_UNWINDER_PROLOGUE)	+= unwind_prologue.o
 
