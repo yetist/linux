@@ -10,7 +10,7 @@
 #include <asm/export.h>
 #include <asm/regdef.h>
 
-SYM_FUNC_START(memmove)
+SYM_FUNC_START_WEAK(memmove)
 	blt	a0, a1, 1f	/* dst < src, memcpy */
 	blt	a1, a0, 3f	/* src < dst, rmemcpy */
 	jr	ra		/* dst == src, return */
@@ -19,26 +19,28 @@ SYM_FUNC_START(memmove)
 1:	ori	a3, zero, 64
 	sub.d	t0, a1, a0
 	blt	t0, a3, 2f
-	b	memcpy
+	b	__memcpy
 2:	b	__memcpy_generic
 
 	/* if (dst - src) < 64, copy 1 byte at a time */
 3:	ori	a3, zero, 64
 	sub.d	t0, a0, a1
 	blt	t0, a3, 4f
-	b	rmemcpy
+	b	__rmemcpy
 4:	b	__rmemcpy_generic
 SYM_FUNC_END(memmove)
+SYM_FUNC_ALIAS(__memmove, memmove)
 
 EXPORT_SYMBOL(memmove)
+EXPORT_SYMBOL(__memmove)
 
-SYM_FUNC_START(rmemcpy)
+SYM_FUNC_START(__rmemcpy)
 	/*
 	 * Some CPUs support hardware unaligned access
 	 */
 	ALTERNATIVE	"b __rmemcpy_generic", \
 			"b __rmemcpy_fast", CPU_FEATURE_UAL
-SYM_FUNC_END(rmemcpy)
+SYM_FUNC_END(__rmemcpy)
 
 /*
  * void *__rmemcpy_generic(void *dst, const void *src, size_t n)

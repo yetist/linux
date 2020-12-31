@@ -31,6 +31,8 @@ ifdef CONFIG_FUNCTION_TRACER
   CFLAGS_REMOVE_perf_event.o = $(CC_FLAGS_FTRACE)
 endif
 
+KASAN_SANITIZE_vdso.o := n
+
 obj-$(CONFIG_MODULES)		+= module.o module-sections.o
 obj-$(CONFIG_STACKTRACE)	+= stacktrace.o
 
