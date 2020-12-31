@@ -89,6 +89,10 @@ SYM_CODE_START(kernel_entry)			# kernel entry point
 	set_saved_sp	sp, t0, t1
 	PTR_ADDI	sp, sp, -4 * SZREG	# init stack pointer
 
+#ifdef CONFIG_KASAN
+	bl		kasan_early_init
+#endif
+
 #ifdef CONFIG_RELOCATABLE
 	/* Copy kernel and apply the relocations */
 	bl		relocate_kernel
