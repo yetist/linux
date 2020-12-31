@@ -203,6 +203,10 @@ config SCHED_OMIT_FRAME_POINTER
 	bool
 	default y
 
+config HARDWARE_WATCHPOINTS
+	bool
+	default y
+
 menu "Kernel type and options"
 
 source "kernel/Kconfig.hz"
