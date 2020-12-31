@@ -20,6 +20,7 @@
 #include <asm/compiler.h>
 #include <asm/idle.h>
 #include <asm/loongarch.h>
+#include <asm/loongson.h>
 #include <asm/reboot.h>
 
 static void default_halt(void)
@@ -82,6 +83,7 @@ void machine_power_off(void)
 	preempt_disable();
 	smp_send_stop();
 #endif
+	enable_pci_wakeup();
 	pm_power_off();
 }
 

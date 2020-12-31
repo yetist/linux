@@ -353,6 +353,12 @@ static void __init acpi_process_madt(void)
 	}
 }
 
+#ifdef CONFIG_ACPI_SLEEP
+int (*acpi_suspend_lowlevel)(void) = loongarch_acpi_suspend;
+#else
+int (*acpi_suspend_lowlevel)(void);
+#endif
+
 int __init acpi_boot_init(void)
 {
 	/*
