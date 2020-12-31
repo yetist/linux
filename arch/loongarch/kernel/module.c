@@ -10,6 +10,7 @@
 
 #include <linux/moduleloader.h>
 #include <linux/elf.h>
+#include <linux/ftrace.h>
 #include <linux/mm.h>
 #include <linux/numa.h>
 #include <linux/vmalloc.h>
@@ -18,7 +19,7 @@
 #include <linux/string.h>
 #include <linux/kernel.h>
 #include <asm/alternative.h>
-
+#include <asm/inst.h>
 #include <asm/unwind.h>
 
 static inline bool signed_imm_check(long val, unsigned int bit)
@@ -377,6 +378,47 @@ void *module_alloc(unsigned long size)
 			GFP_KERNEL, PAGE_KERNEL, 0, NUMA_NO_NODE, __builtin_return_address(0));
 }
 
+#ifdef CONFIG_DYNAMIC_FTRACE
+static const Elf_Shdr *find_section(const Elf_Ehdr *hdr,
+				    const Elf_Shdr *sechdrs,
+				    const char *name)
+{
+	const Elf_Shdr *s, *se;
+	const char *secstrs = (void *)hdr + sechdrs[hdr->e_shstrndx].sh_offset;
+
+	for (s = sechdrs, se = sechdrs + hdr->e_shnum; s < se; s++) {
+		if (strcmp(name, secstrs + s->sh_name) == 0)
+			return s;
+	}
+
+	return NULL;
+}
+#endif
+
+static int module_init_ftrace_plt(const Elf_Ehdr *hdr,
+				  const Elf_Shdr *sechdrs,
+				  struct module *mod)
+{
+#ifdef CONFIG_DYNAMIC_FTRACE
+	const Elf_Shdr *s;
+	struct plt_entry *ftrace_plts;
+
+	s = find_section(hdr, sechdrs, ".ftrace_trampoline");
+	if (!s)
+		return -ENOEXEC;
+
+	ftrace_plts = (void *)s->sh_addr;
+
+	ftrace_plts[FTRACE_PLT_IDX] = emit_plt_entry(FTRACE_ADDR);
+
+	if (IS_ENABLED(CONFIG_DYNAMIC_FTRACE_WITH_REGS))
+		ftrace_plts[FTRACE_REGS_PLT_IDX] = emit_plt_entry(FTRACE_REGS_ADDR);
+
+	mod->arch.ftrace_trampolines = ftrace_plts;
+#endif
+	return 0;
+}
+
 int module_finalize(const Elf_Ehdr *hdr,
 		    const Elf_Shdr *sechdrs,
 		    struct module *mod)
@@ -404,6 +446,8 @@ int module_finalize(const Elf_Ehdr *hdr,
 	if (orc && orc_ip)
 		unwind_module_init(mod, (void *)orc_ip->sh_addr, orc_ip->sh_size,
 				   (void *)orc->sh_addr, orc->sh_size);
+
+	module_init_ftrace_plt(hdr, sechdrs, mod);
 
 	return 0;
 }
