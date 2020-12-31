@@ -64,6 +64,9 @@ EXPORT_SYMBOL(cpu_data);
 struct loongson_board_info b_info;
 static const char dmi_empty_string[] = "        ";
 
+unsigned long __kaslr_offset __ro_after_init;
+EXPORT_SYMBOL(__kaslr_offset);
+
 /*
  * Setup information
  *
