@@ -65,6 +65,11 @@ vmlinuzobjs-$(CONFIG_EFI_STUB) += $(objtree)/drivers/firmware/efi/libstub/lib.a
 $(obj)/zkernel.o: $(obj)/vmlinux.bin.z
 AFLAGS_zkernel.o = $(KBUILD_AFLAGS) -DVMLINUZ_LOAD_ADDRESS=$(zload-y) -DKERNEL_ENTRY=$(entry-y)
 
+ifdef CONFIG_DEBUG_ZBOOT
+vmlinuzobjs-$(CONFIG_DEBUG_ZBOOT)	+= $(obj)/dbg.o
+vmlinuzobjs-$(CONFIG_DEBUG_ZBOOT)	+= $(obj)/uart-16550.o
+endif
+
 quiet_cmd_zld = LD      $@
       cmd_zld = $(LD) $(KBUILD_LDFLAGS) -T $< $(vmlinuzobjs-y) -o $@
 
