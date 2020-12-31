@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 #include <linux/uaccess.h>
+#include <asm/checksum.h>
 #include <asm/fpu.h>
 #include <asm/mmu_context.h>
 #include <asm/page.h>
