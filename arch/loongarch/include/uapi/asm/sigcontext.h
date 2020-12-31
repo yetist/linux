@@ -41,4 +41,24 @@ struct fpu_context {
 	__u32	fcsr;
 };
 
+/* LSX context */
+#define LSX_CTX_MAGIC		0x53580001
+#define LSX_CTX_ALIGN		16
+struct lsx_context {
+	__u64	regs[2*32];
+	__u64	fcc;
+	__u32	fcsr;
+	__u32	vcsr;
+};
+
+/* LASX context */
+#define LASX_CTX_MAGIC		0x41535801
+#define LASX_CTX_ALIGN		32
+struct lasx_context {
+	__u64	regs[4*32];
+	__u64	fcc;
+	__u32	fcsr;
+	__u32	vcsr;
+};
+
 #endif /* _UAPI_ASM_SIGCONTEXT_H */
