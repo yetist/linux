@@ -21,8 +21,14 @@ unsigned long free_mem_end_ptr;
 /* The linker tells us where the image is. */
 extern unsigned char __image_begin, __image_end;
 
+/* debug interfaces  */
+#ifdef CONFIG_DEBUG_ZBOOT
+extern void puts(const char *s);
+extern void puthex(unsigned long long val);
+#else
 #define puts(s) do {} while (0)
 #define puthex(val) do {} while (0)
+#endif
 
 void error(char *x)
 {
