@@ -88,6 +88,22 @@ struct loongarch_fpu {
 	{0,} \
 }
 
+struct loongarch3264_watch_reg_state {
+	/* The width of addr, mask is 32 in a 32 bit kernel and 64 in a
+	   64 bit kernel.  We use unsigned long as it has the same
+	   property. */
+	unsigned long addr[NUM_WATCH_REGS];
+	/* Only the mask and IRW bits from watchhi. */
+	unsigned long mask[NUM_WATCH_REGS];
+	unsigned char irw[NUM_WATCH_REGS];
+	unsigned char irwstat[NUM_WATCH_REGS];
+	unsigned char irwmask[NUM_WATCH_REGS];
+};
+
+union loongarch_watch_reg_state {
+	struct loongarch3264_watch_reg_state loongarch3264;
+};
+
 #define ARCH_MIN_TASKALIGN	32
 
 struct loongarch_vdso_info;
@@ -120,6 +136,12 @@ struct thread_struct {
 
 	/* Eflags register */
 	unsigned long eflags;
+
+	/* Used by ptrace single_step */
+	unsigned long single_step;
+
+	/* Saved watch register state, if available. */
+	union loongarch_watch_reg_state watch;
 
 	/* Other stuff associated with the thread. */
 	unsigned long trap_nr;
@@ -159,6 +181,10 @@ struct thread_struct {
 	.csr_euen		= 0,				\
 	.csr_ecfg		= 0,				\
 	.csr_badvaddr		= 0,				\
+	/*							\
+	 * Saved watch register stuff				\
+	 */							\
+	.watch = {{{0,},},},					\
 	/*							\
 	 * Other stuff associated with the process		\
 	 */							\
