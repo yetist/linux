@@ -45,6 +45,7 @@
 #include <asm/tlb.h>
 #include <asm/types.h>
 #include <asm/unwind.h>
+#include <asm/watch.h>
 
 #include "access-helper.h"
 
@@ -463,7 +464,31 @@ out_sigsegv:
 
 asmlinkage void noinstr do_watch(struct pt_regs *regs)
 {
-	pr_warn("Hardware watch point handler not implemented!\n");
+	irqentry_state_t state = irqentry_enter(regs);
+
+	if (test_tsk_thread_flag(current, TIF_LOAD_WATCH)) {
+		loongarch_read_watch_registers(regs);
+		force_sig_fault(SIGTRAP, TRAP_HWBKPT, NULL);
+	} else if (test_tsk_thread_flag(current, TIF_SINGLESTEP)) {
+		int llbit = (csr_read32(LOONGARCH_CSR_LLBCTL) & 0x1);
+		unsigned long pc = regs->csr_era;
+
+		if (llbit) {
+			csr_write32(0x10000, LOONGARCH_CSR_FWPS);
+			csr_write32(0x4, LOONGARCH_CSR_LLBCTL);
+		} else if (pc == current->thread.single_step) {
+			csr_write32(0x10000, LOONGARCH_CSR_FWPS);
+		} else {
+			loongarch_read_watch_registers(regs);
+			force_sig(SIGTRAP);
+		}
+	} else {
+		if (notify_die(DIE_TRAP, "Break", regs, 0,
+			       current->thread.trap_nr, SIGTRAP) != NOTIFY_STOP)
+			loongarch_clear_watch_registers();
+	}
+
+	irqentry_exit(regs, state);
 }
 
 asmlinkage void noinstr do_ri(struct pt_regs *regs)
