@@ -7,10 +7,32 @@
 
 #include <asm/cacheflush.h>
 #include <asm/inst.h>
+#include <asm/kprobes.h>
+
+#define __SIGNEX(X, SIDX) ((X) >= (1 << SIDX) ? ~((1 << SIDX) - 1) | (X) : (X))
+#define SIGNEX16(X) __SIGNEX(((unsigned long)(X)), 15)
+#define SIGNEX20(X) __SIGNEX(((unsigned long)(X)), 19)
+#define SIGNEX21(X) __SIGNEX(((unsigned long)(X)), 20)
+#define SIGNEX26(X) __SIGNEX(((unsigned long)(X)), 25)
+
+unsigned long bs_dest_16(unsigned long now, unsigned int si)
+{
+	return now + (SIGNEX16(si) << 2);
+}
+
+unsigned long bs_dest_21(unsigned long now, unsigned int h, unsigned int l)
+{
+	return now + (SIGNEX21(h << 16 | l) << 2);
+}
+
+unsigned long bs_dest_26(unsigned long now, unsigned int h, unsigned int l)
+{
+	return now + (SIGNEX26(h << 16 | l) << 2);
+}
 
 static DEFINE_RAW_SPINLOCK(patch_lock);
 
-void simu_pc(struct pt_regs *regs, union loongarch_instruction insn)
+int simu_pc(struct pt_regs *regs, union loongarch_instruction insn)
 {
 	unsigned long pc = regs->csr_era;
 	unsigned int rd = insn.reg1i20_format.rd;
@@ -18,7 +40,7 @@ void simu_pc(struct pt_regs *regs, union loongarch_instruction insn)
 
 	if (pc & 3) {
 		pr_warn("%s: invalid pc 0x%lx\n", __func__, pc);
-		return;
+		return -EFAULT;
 	}
 
 	switch (insn.reg1i20_format.opcode) {
@@ -37,20 +59,22 @@ void simu_pc(struct pt_regs *regs, union loongarch_instruction insn)
 		break;
 	default:
 		pr_info("%s: unknown opcode\n", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	regs->csr_era += LOONGARCH_INSN_SIZE;
+
+	return 0;
 }
 
-void simu_branch(struct pt_regs *regs, union loongarch_instruction insn)
+int simu_branch(struct pt_regs *regs, union loongarch_instruction insn)
 {
 	unsigned int imm, imm_l, imm_h, rd, rj;
 	unsigned long pc = regs->csr_era;
 
 	if (pc & 3) {
 		pr_warn("%s: invalid pc 0x%lx\n", __func__, pc);
-		return;
+		return -EFAULT;
 	}
 
 	imm_l = insn.reg0i26_format.immediate_l;
@@ -58,11 +82,11 @@ void simu_branch(struct pt_regs *regs, union loongarch_instruction insn)
 	switch (insn.reg0i26_format.opcode) {
 	case b_op:
 		regs->csr_era = pc + sign_extend64((imm_h << 16 | imm_l) << 2, 27);
-		return;
+		return 0;
 	case bl_op:
 		regs->csr_era = pc + sign_extend64((imm_h << 16 | imm_l) << 2, 27);
 		regs->regs[1] = pc + LOONGARCH_INSN_SIZE;
-		return;
+		return 0;
 	}
 
 	imm_l = insn.reg1i21_format.immediate_l;
@@ -74,13 +98,13 @@ void simu_branch(struct pt_regs *regs, union loongarch_instruction insn)
 			regs->csr_era = pc + sign_extend64((imm_h << 16 | imm_l) << 2, 22);
 		else
 			regs->csr_era = pc + LOONGARCH_INSN_SIZE;
-		return;
+		return 0;
 	case bnez_op:
 		if (regs->regs[rj] != 0)
 			regs->csr_era = pc + sign_extend64((imm_h << 16 | imm_l) << 2, 22);
 		else
 			regs->csr_era = pc + LOONGARCH_INSN_SIZE;
-		return;
+		return 0;
 	}
 
 	imm = insn.reg2i16_format.immediate;
@@ -129,8 +153,10 @@ void simu_branch(struct pt_regs *regs, union loongarch_instruction insn)
 		break;
 	default:
 		pr_info("%s: unknown opcode\n", __func__);
-		return;
+		return -EINVAL;
 	}
+
+	return 0;
 }
 
 int larch_insn_read(void *addr, u32 *insnp)
@@ -252,6 +278,12 @@ u32 larch_insn_gen_lu52id(enum loongarch_gpr rd, enum loongarch_gpr rj, int imm)
 u32 larch_insn_gen_jirl(enum loongarch_gpr rd, enum loongarch_gpr rj, unsigned long pc, unsigned long dest)
 {
 	union loongarch_instruction insn;
+	long offset = dest - pc;
+
+	if ((offset & 3) || offset < -SZ_128K || offset >= SZ_128K) {
+		pr_warn("The generated jirl instruction is out of range.\n");
+		return INSN_BREAK;
+	}
 
 	emit_jirl(&insn, rj, rd, (dest - pc) >> 2);
 
