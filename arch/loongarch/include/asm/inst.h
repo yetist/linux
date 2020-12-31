@@ -7,6 +7,8 @@
 
 #include <linux/types.h>
 #include <asm/asm.h>
+#include <asm/errno.h>
+#include <asm/ptrace.h>
 
 #define INSN_NOP		0x03400000
 #define INSN_BREAK		0x002a0000
@@ -23,6 +25,10 @@
 
 #define ADDR_IMM(addr, INSN)	((addr & ADDR_IMMMASK_##INSN) >> ADDR_IMMSHIFT_##INSN)
 
+enum reg0i15_op {
+	break_op	= 0x54,
+};
+
 enum reg0i26_op {
 	b_op		= 0x14,
 	bl_op		= 0x15,
@@ -32,6 +38,7 @@ enum reg1i20_op {
 	lu12iw_op	= 0x0a,
 	lu32id_op	= 0x0b,
 	pcaddi_op	= 0x0c,
+	pcalau12i_op	= 0x0d,
 	pcaddu12i_op	= 0x0e,
 	pcaddu18i_op	= 0x0f,
 };
@@ -100,6 +107,7 @@ enum reg2i14_op {
 };
 
 enum reg2i16_op {
+	addu16id_op	= 0x04,
 	jirl_op		= 0x13,
 	beq_op		= 0x16,
 	bne_op		= 0x17,
@@ -176,6 +184,11 @@ enum reg3sa2_op {
 	alslw_op	= 0x02,
 	alslwu_op	= 0x03,
 	alsld_op	= 0x16,
+};
+
+struct reg0i15_format {
+	unsigned int immediate : 15;
+	unsigned int opcode : 17;
 };
 
 struct reg0i26_format {
@@ -263,6 +276,7 @@ struct reg3sa2_format {
 
 union loongarch_instruction {
 	unsigned int word;
+	struct reg0i15_format	reg0i15_format;
 	struct reg0i26_format	reg0i26_format;
 	struct reg1i20_format	reg1i20_format;
 	struct reg1i21_format	reg1i21_format;
@@ -350,6 +364,53 @@ static inline bool is_stack_alloc_ins(union loongarch_instruction *ip)
 		ip->reg2i12_format.rd == LOONGARCH_GPR_SP &&
 		is_imm12_negative(ip->reg2i12_format.immediate);
 }
+
+static inline bool cond_beqz(struct pt_regs *regs, int rj)
+{
+	return regs->regs[rj] == 0;
+}
+
+static inline bool cond_bnez(struct pt_regs *regs, int rj)
+{
+	return regs->regs[rj] != 0;
+}
+
+static inline bool cond_beq(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] == regs->regs[rd];
+}
+
+static inline bool cond_bne(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] != regs->regs[rd];
+}
+
+static inline bool cond_blt(struct pt_regs *regs, int rj, int rd)
+{
+	return (long)regs->regs[rj] < (long)regs->regs[rd];
+}
+
+static inline bool cond_bge(struct pt_regs *regs, int rj, int rd)
+{
+	return (long)regs->regs[rj] >= (long)regs->regs[rd];
+}
+
+static inline bool cond_bltu(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] < regs->regs[rd];
+}
+
+static inline bool cond_bgeu(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] >= regs->regs[rd];
+}
+
+unsigned long bs_dest_16(unsigned long now, unsigned int si);
+unsigned long bs_dest_21(unsigned long now, unsigned int h, unsigned int l);
+unsigned long bs_dest_26(unsigned long now, unsigned int h, unsigned int l);
+
+int simu_branch(struct pt_regs *regs, union loongarch_instruction insn);
+int simu_pc(struct pt_regs *regs, union loongarch_instruction insn);
 
 int larch_insn_read(void *addr, u32 *insnp);
 int larch_insn_write(void *addr, u32 insn);

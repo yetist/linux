@@ -7,6 +7,150 @@
 
 #include <asm/cacheflush.h>
 #include <asm/inst.h>
+#include <asm/kprobes.h>
+
+#define __SIGNEX(X, SIDX) ((X) >= (1 << SIDX) ? ~((1 << SIDX) - 1) | (X) : (X))
+#define SIGNEX16(X) __SIGNEX(((unsigned long)(X)), 15)
+#define SIGNEX20(X) __SIGNEX(((unsigned long)(X)), 19)
+#define SIGNEX21(X) __SIGNEX(((unsigned long)(X)), 20)
+#define SIGNEX26(X) __SIGNEX(((unsigned long)(X)), 25)
+
+unsigned long bs_dest_16(unsigned long now, unsigned int si)
+{
+	return now + (SIGNEX16(si) << 2);
+}
+
+unsigned long bs_dest_21(unsigned long now, unsigned int h, unsigned int l)
+{
+	return now + (SIGNEX21(h << 16 | l) << 2);
+}
+
+unsigned long bs_dest_26(unsigned long now, unsigned int h, unsigned int l)
+{
+	return now + (SIGNEX26(h << 16 | l) << 2);
+}
+
+int simu_branch(struct pt_regs *regs, union loongarch_instruction insn)
+{
+	unsigned int si, si_l, si_h, rd, rj;
+	unsigned long era = regs->csr_era;
+
+	if (era & 3)
+		return -EFAULT;
+
+	si_l = insn.reg0i26_format.immediate_l;
+	si_h = insn.reg0i26_format.immediate_h;
+	switch (insn.reg0i26_format.opcode) {
+	case b_op:
+		regs->csr_era = bs_dest_26(era, si_h, si_l);
+		return 0;
+	case bl_op:
+		regs->csr_era = bs_dest_26(era, si_h, si_l);
+		regs->regs[1] = era + LOONGARCH_INSN_SIZE;
+		return 0;
+	}
+
+	si_l = insn.reg1i21_format.immediate_l;
+	si_h = insn.reg1i21_format.immediate_h;
+	rj = insn.reg1i21_format.rj;
+	switch (insn.reg1i21_format.opcode) {
+	case beqz_op:
+		if (cond_beqz(regs, rj))
+			regs->csr_era = bs_dest_21(era, si_h, si_l);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		return 0;
+	case bnez_op:
+		if (cond_bnez(regs, rj))
+			regs->csr_era = bs_dest_21(era, si_h, si_l);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		return 0;
+	}
+
+	si = insn.reg2i16_format.immediate;
+	rj = insn.reg2i16_format.rj;
+	rd = insn.reg2i16_format.rd;
+	switch (insn.reg2i16_format.opcode) {
+	case beq_op:
+		if (cond_beq(regs, rj, rd))
+			regs->csr_era = bs_dest_16(era, si);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		break;
+	case bne_op:
+		if (cond_bne(regs, rj, rd))
+			regs->csr_era = bs_dest_16(era, si);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		break;
+	case blt_op:
+		if (cond_blt(regs, rj, rd))
+			regs->csr_era = bs_dest_16(era, si);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		break;
+	case bge_op:
+		if (cond_bge(regs, rj, rd))
+			regs->csr_era = bs_dest_16(era, si);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		break;
+	case bltu_op:
+		if (cond_bltu(regs, rj, rd))
+			regs->csr_era = bs_dest_16(era, si);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		break;
+	case bgeu_op:
+		if (cond_bgeu(regs, rj, rd))
+			regs->csr_era = bs_dest_16(era, si);
+		else
+			regs->csr_era += LOONGARCH_INSN_SIZE;
+		break;
+	case jirl_op:
+		/* Use bs_dest_16() to calc the dest. */
+		regs->csr_era = bs_dest_16(regs->regs[rj], si);
+		regs->regs[rd] = era + LOONGARCH_INSN_SIZE;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+int simu_pc(struct pt_regs *regs, union loongarch_instruction insn)
+{
+	unsigned long era = regs->csr_era;
+	unsigned int rd = insn.reg1i20_format.rd;
+	unsigned int si = insn.reg1i20_format.immediate;
+
+	if (era & 3)
+		return -EFAULT;
+
+	switch (insn.reg1i20_format.opcode) {
+	case pcaddi_op:
+		regs->regs[rd] = era + (SIGNEX20(si) << 2);
+		break;
+	case pcalau12i_op:
+		regs->regs[rd] = era + (SIGNEX20(si) << 12);
+		regs->regs[rd] &= ~((1 << 12) - 1);
+		break;
+	case pcaddu12i_op:
+		regs->regs[rd] = era + (SIGNEX20(si) << 12);
+		break;
+	case pcaddu18i_op:
+		regs->regs[rd] = era + (SIGNEX20(si) << 18);
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	regs->csr_era += LOONGARCH_INSN_SIZE;
+
+	return 0;
+}
 
 static DEFINE_RAW_SPINLOCK(patch_lock);
 
@@ -129,6 +273,12 @@ u32 larch_insn_gen_lu52id(enum loongarch_gpr rd, enum loongarch_gpr rj, int imm)
 u32 larch_insn_gen_jirl(enum loongarch_gpr rd, enum loongarch_gpr rj, unsigned long pc, unsigned long dest)
 {
 	union loongarch_instruction insn;
+	long offset = dest - pc;
+
+	if ((offset & 3) || offset < -SZ_128K || offset >= SZ_128K) {
+		pr_warn("The generated jirl instruction is out of range.\n");
+		return INSN_BREAK;
+	}
 
 	emit_jirl(&insn, rj, rd, (dest - pc) >> 2);
 
