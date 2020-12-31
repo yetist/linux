@@ -7,6 +7,7 @@
 
 #include <linux/types.h>
 #include <asm/asm.h>
+#include <asm/errno.h>
 #include <asm/ptrace.h>
 
 #define INSN_NOP		0x03400000
@@ -106,6 +107,7 @@ enum reg2i14_op {
 };
 
 enum reg2i16_op {
+	addu16id_op	= 0x04,
 	jirl_op		= 0x13,
 	beq_op		= 0x16,
 	bne_op		= 0x17,
@@ -406,8 +408,52 @@ static inline bool is_self_loop_ins(union loongarch_instruction *ip, struct pt_r
 	return false;
 }
 
-void simu_pc(struct pt_regs *regs, union loongarch_instruction insn);
-void simu_branch(struct pt_regs *regs, union loongarch_instruction insn);
+static inline bool cond_beqz(struct pt_regs *regs, int rj)
+{
+	return regs->regs[rj] == 0;
+}
+
+static inline bool cond_bnez(struct pt_regs *regs, int rj)
+{
+	return regs->regs[rj] != 0;
+}
+
+static inline bool cond_beq(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] == regs->regs[rd];
+}
+
+static inline bool cond_bne(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] != regs->regs[rd];
+}
+
+static inline bool cond_blt(struct pt_regs *regs, int rj, int rd)
+{
+	return (long)regs->regs[rj] < (long)regs->regs[rd];
+}
+
+static inline bool cond_bge(struct pt_regs *regs, int rj, int rd)
+{
+	return (long)regs->regs[rj] >= (long)regs->regs[rd];
+}
+
+static inline bool cond_bltu(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] < regs->regs[rd];
+}
+
+static inline bool cond_bgeu(struct pt_regs *regs, int rj, int rd)
+{
+	return regs->regs[rj] >= regs->regs[rd];
+}
+
+unsigned long bs_dest_16(unsigned long now, unsigned int si);
+unsigned long bs_dest_21(unsigned long now, unsigned int h, unsigned int l);
+unsigned long bs_dest_26(unsigned long now, unsigned int h, unsigned int l);
+
+int simu_pc(struct pt_regs *regs, union loongarch_instruction insn);
+int simu_branch(struct pt_regs *regs, union loongarch_instruction insn);
 
 int larch_insn_read(void *addr, u32 *insnp);
 int larch_insn_write(void *addr, u32 insn);
