@@ -84,6 +84,21 @@ enum reg2i12_op {
 	ldbu_op		= 0xa8,
 	ldhu_op		= 0xa9,
 	ldwu_op		= 0xaa,
+	flds_op		= 0xac,
+	fsts_op		= 0xad,
+	fldd_op		= 0xae,
+	fstd_op		= 0xaf,
+};
+
+enum reg2i14_op {
+	llw_op		= 0x20,
+	scw_op		= 0x21,
+	lld_op		= 0x22,
+	scd_op		= 0x23,
+	ldptrw_op	= 0x24,
+	stptrw_op	= 0x25,
+	ldptrd_op	= 0x26,
+	stptrd_op	= 0x27,
 };
 
 enum reg2i16_op {
@@ -138,6 +153,10 @@ enum reg3_op {
 	ldxbu_op	= 0x7040,
 	ldxhu_op	= 0x7048,
 	ldxwu_op	= 0x7050,
+	fldxs_op	= 0x7060,
+	fldxd_op	= 0x7068,
+	fstxs_op	= 0x7070,
+	fstxd_op	= 0x7078,
 	amaddw_op	= 0x70c2,
 	amaddd_op	= 0x70c3,
 };
@@ -188,6 +207,13 @@ struct reg2i12_format {
 	unsigned int opcode : 10;
 };
 
+struct reg2i14_format {
+	unsigned int rd : 5;
+	unsigned int rj : 5;
+	unsigned int immediate : 14;
+	unsigned int opcode : 8;
+};
+
 struct reg2i16_format {
 	unsigned int rd : 5;
 	unsigned int rj : 5;
@@ -211,6 +237,7 @@ union loongarch_instruction {
 	struct reg2i5_format	reg2i5_format;
 	struct reg2i6_format	reg2i6_format;
 	struct reg2i12_format	reg2i12_format;
+	struct reg2i14_format	reg2i14_format;
 	struct reg2i16_format	reg2i16_format;
 	struct reg3_format	reg3_format;
 };

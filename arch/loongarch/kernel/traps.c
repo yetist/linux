@@ -394,16 +394,6 @@ asmlinkage void noinstr do_ade(struct pt_regs *regs)
 	irqentry_exit(regs, state);
 }
 
-asmlinkage void noinstr do_ale(struct pt_regs *regs)
-{
-	irqentry_state_t state = irqentry_enter(regs);
-
-	die_if_kernel("Kernel ale access", regs);
-	force_sig_fault(SIGBUS, BUS_ADRALN, (void __user *)regs->csr_badvaddr);
-
-	irqentry_exit(regs, state);
-}
-
 #ifdef CONFIG_GENERIC_BUG
 int is_valid_bugaddr(unsigned long addr)
 {
