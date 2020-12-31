@@ -14,6 +14,7 @@
 #include <linux/interrupt.h>
 #include <linux/seq_file.h>
 #include <linux/smp.h>
+#include <linux/syscore_ops.h>
 #include <linux/threads.h>
 #include <linux/export.h>
 #include <linux/time.h>

@@ -156,6 +156,55 @@ static void __init acpi_process_madt(void)
 	loongson_sysconf.nr_cpus = num_processors;
 }
 
+#ifdef CONFIG_ACPI_SLEEP
+int (*acpi_suspend_lowlevel)(void) = loongarch_acpi_suspend;
+#else
+int (*acpi_suspend_lowlevel)(void);
+#endif
+
+static int __init acpi_parse_fadt(struct acpi_table_header *table)
+{
+	u64 pm1_cnt, pm1_ena, pm1_evt, gpe0_ena;
+
+	if (acpi_gbl_reduced_hardware)
+		return 0;
+
+	if (acpi_gbl_FADT.xpm1a_control_block.space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
+		return -1;
+
+	pm1_cnt = acpi_gbl_FADT.xpm1a_control_block.address;
+	if (!pm1_cnt)
+		return -1;
+
+	if (acpi_gbl_FADT.xpm1a_event_block.space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
+		return -1;
+
+	pm1_evt = acpi_gbl_FADT.xpm1a_event_block.address;
+	if (!pm1_evt)
+		return -1;
+
+	pm1_ena = acpi_gbl_FADT.xpm1a_event_block.address + acpi_gbl_FADT.pm1_event_length / 2;
+	if (!pm1_ena)
+		return -1;
+
+	if (acpi_gbl_FADT.xgpe0_block.space_id != ACPI_ADR_SPACE_SYSTEM_MEMORY)
+		return -1;
+
+	gpe0_ena = acpi_gbl_FADT.xgpe0_block.address + acpi_gbl_FADT.gpe0_block_length / 2;
+	if (!gpe0_ena)
+		return -1;
+
+	loongson_sysconf.pm1_cnt_reg = TO_UNCACHE(pm1_cnt);
+	loongson_sysconf.pm1_ena_reg = TO_UNCACHE(pm1_ena);
+	loongson_sysconf.pm1_evt_reg = TO_UNCACHE(pm1_evt);
+	loongson_sysconf.gpe0_ena_reg = TO_UNCACHE(gpe0_ena);
+
+	loongson_sysconf.pci_wake_enabled =
+		!(readw((volatile void *)loongson_sysconf.pm1_ena_reg) & ACPI_PCI_WAKE_STATUS);
+
+	return 0;
+}
+
 int __init acpi_boot_init(void)
 {
 	/*
@@ -170,6 +219,8 @@ int __init acpi_boot_init(void)
 	 * Process the Multiple APIC Description Table (MADT), if present
 	 */
 	acpi_process_madt();
+
+	acpi_table_parse(ACPI_SIG_FADT, acpi_parse_fadt);
 
 	/* Do not enable ACPI SPCR console by default */
 	acpi_parse_spcr(earlycon_acpi_spcr_enable, false);

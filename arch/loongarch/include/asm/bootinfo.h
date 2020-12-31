@@ -32,6 +32,12 @@ struct loongson_system_configuration {
 	int cores_per_node;
 	int cores_per_package;
 	unsigned long cores_io_master;
+	unsigned long pm1_cnt_reg;
+	unsigned long pm1_ena_reg;
+	unsigned long pm1_evt_reg;
+	unsigned long gpe0_ena_reg;
+	unsigned long suspend_addr;
+	unsigned char pci_wake_enabled;
 	const char *cpuname;
 };
 
