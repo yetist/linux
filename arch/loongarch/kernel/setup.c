@@ -24,6 +24,7 @@
 #include <linux/highmem.h>
 #include <linux/pfn.h>
 #include <linux/platform_device.h>
+#include <linux/debugfs.h>
 #include <linux/kexec.h>
 #include <linux/sizes.h>
 #include <linux/device.h>
@@ -40,6 +41,7 @@
 #include <asm/bugs.h>
 #include <asm/cache.h>
 #include <asm/cpu.h>
+#include <asm/debug.h>
 #include <asm/dma.h>
 #include <asm/efi.h>
 #include <asm/loongson.h>
@@ -634,3 +636,18 @@ void __init device_tree_init(void)
 	if (early_init_dt_verify(initial_boot_params))
 		unflatten_and_copy_device_tree();
 }
+
+#ifdef CONFIG_DEBUG_FS
+struct dentry *loongarch_debugfs_dir;
+static int __init debugfs_loongarch(void)
+{
+	struct dentry *d;
+
+	d = debugfs_create_dir("loongarch", NULL);
+	if (!d)
+		return -ENOMEM;
+	loongarch_debugfs_dir = d;
+	return 0;
+}
+arch_initcall(debugfs_loongarch);
+#endif
