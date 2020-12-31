@@ -2,6 +2,10 @@
 # Objects to go into the VDSO.
 OBJECT_FILES_NON_STANDARD		:= y
 
+ifdef CONFIG_KASAN
+KASAN_SANITIZE := n
+endif
+
 # Absolute relocation type $(ARCH_REL_TYPE_ABS) needs to be defined before
 # the inclusion of generic Makefile.
 ARCH_REL_TYPE_ABS := R_LARCH_32|R_LARCH_64|R_LARCH_MARK_LA|R_LARCH_JUMP_SLOT

@@ -3,6 +3,10 @@
 # Makefile for the linux kernel.
 #
 
+ifdef CONFIG_KASAN
+KASAN_SANITIZE  := n
+endif
+
 obj-y     = fork.o exec_domain.o panic.o \
 	    cpu.o exit.o softirq.o resource.o \
 	    sysctl.o capability.o ptrace.o user.o \
