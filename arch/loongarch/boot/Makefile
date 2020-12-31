@@ -5,6 +5,10 @@
 #
 OBJECT_FILES_NON_STANDARD	:= y
 
+ifdef CONFIG_KASAN
+KASAN_SANITIZE := n
+endif
+
 drop-sections := .comment .note .options .note.gnu.build-id
 strip-flags   := $(addprefix --remove-section=,$(drop-sections)) -S
 OBJCOPYFLAGS_vmlinux.bin := -O binary $(strip-flags)
