@@ -108,6 +108,7 @@ config LOONGARCH
 	select HAVE_KPROBES
 	select HAVE_KPROBES_ON_FTRACE
 	select HAVE_KRETPROBES
+	select HAVE_LIVEPATCH
 	select HAVE_MOD_ARCH_SPECIFIC
 	select HAVE_NMI
 	select HAVE_OBJTOOL
@@ -646,6 +647,8 @@ config ARCH_MMAP_RND_BITS_MIN
 
 config ARCH_MMAP_RND_BITS_MAX
 	default 18
+
+source "kernel/livepatch/Kconfig"
 
 menu "Power management options"
 
