@@ -23,9 +23,11 @@
 #include <linux/console.h>
 #include <linux/pfn.h>
 #include <linux/platform_device.h>
+#include <linux/kexec.h>
 #include <linux/sizes.h>
 #include <linux/device.h>
 #include <linux/dma-map-ops.h>
+#include <linux/crash_dump.h>
 #include <linux/swiotlb.h>
 
 #include <asm/addrspace.h>
@@ -64,6 +66,10 @@ static const char dmi_empty_string[] = "        ";
 
 unsigned long __kaslr_offset __ro_after_init;
 EXPORT_SYMBOL(__kaslr_offset);
+
+#ifdef CONFIG_CRASH_DUMP
+static phys_addr_t crashmem_start, crashmem_size;
+#endif
 
 /*
  * Setup information
@@ -176,8 +182,9 @@ static int __init early_parse_mem(char *p)
 	 */
 	if (usermem == 0) {
 		usermem = 1;
-		memblock_remove(memblock_start_of_DRAM(),
-			memblock_end_of_DRAM() - memblock_start_of_DRAM());
+		if (!strstr(boot_command_line, "elfcorehdr"))
+			memblock_remove(memblock_start_of_DRAM(),
+				memblock_end_of_DRAM() - memblock_start_of_DRAM());
 	}
 	start = 0;
 	size = memparse(p, &p);
@@ -193,9 +200,154 @@ static int __init early_parse_mem(char *p)
 	else
 		memblock_add_node(start, size, pa_to_nid(start), MEMBLOCK_NONE);
 
+#ifdef CONFIG_CRASH_DUMP
+	if (start && size) {
+		crashmem_start = start;
+		crashmem_size = size;
+	}
+#endif
+
 	return 0;
 }
 early_param("mem", early_parse_mem);
+
+static void __init loongarch_reserve_vmcore(void)
+{
+#ifdef CONFIG_PROC_VMCORE
+	u64 i;
+	phys_addr_t start, end;
+
+	if (!elfcorehdr_size) {
+		for_each_mem_range(i, &start, &end) {
+			if (elfcorehdr_addr >= start && elfcorehdr_addr < end) {
+				/*
+				 * Reserve from the elf core header to the end of
+				 * the memory segment, that should all be kdump
+				 * reserved memory.
+				 */
+				elfcorehdr_size = end - elfcorehdr_addr;
+				break;
+			}
+		}
+	}
+
+	pr_info("Reserving %ldKB of memory at %ldKB for kdump\n",
+		(unsigned long)elfcorehdr_size >> 10, (unsigned long)elfcorehdr_addr >> 10);
+
+	memblock_reserve(elfcorehdr_addr, elfcorehdr_size);
+#endif
+}
+
+#ifdef CONFIG_KEXEC
+
+/* 64M alignment for crash kernel regions */
+#define CRASH_ALIGN	SZ_64M
+#define CRASH_ADDR_MAX	SZ_512M
+
+static void __init loongarch_parse_crashkernel(void)
+{
+	unsigned long long total_mem;
+	unsigned long long crash_size, crash_base;
+	int ret;
+
+	total_mem = memblock_phys_mem_size();
+	ret = parse_crashkernel(boot_command_line, total_mem,
+				&crash_size, &crash_base);
+	if (ret != 0 || crash_size <= 0)
+		return;
+
+	if (crash_base <= 0) {
+		crash_base = memblock_phys_alloc_range(crash_size, CRASH_ALIGN,
+						       CRASH_ALIGN, CRASH_ADDR_MAX);
+		if (!crash_base) {
+			pr_warn("crashkernel reservation failed - No suitable area found.\n");
+			return;
+		}
+	} else {
+		unsigned long long start;
+
+		start = memblock_phys_alloc_range(crash_size, 1, crash_base,
+							crash_base + crash_size);
+		if (start != crash_base) {
+			pr_warn("Invalid memory region reserved for crash kernel\n");
+			return;
+		}
+	}
+
+	crashk_res.start = crash_base;
+	crashk_res.end	 = crash_base + crash_size - 1;
+}
+
+static void __init request_crashkernel(struct resource *res)
+{
+	int ret;
+
+	if (crashk_res.start == crashk_res.end)
+		return;
+
+	ret = request_resource(res, &crashk_res);
+	if (!ret)
+		pr_info("Reserving %ldMB of memory at %ldMB for crashkernel\n",
+			(unsigned long)((crashk_res.end -
+					 crashk_res.start + 1) >> 20),
+			(unsigned long)(crashk_res.start  >> 20));
+}
+#else /* !defined(CONFIG_KEXEC)		*/
+static void __init loongarch_parse_crashkernel(void)
+{
+}
+
+static void __init request_crashkernel(struct resource *res)
+{
+}
+#endif /* !defined(CONFIG_KEXEC)  */
+
+/* Traditionally, LoongArch's contiguous low memory is 256M, so crashkernel=X@Y
+ * is unable to be large enough in some cases. Thus, if the total memory of a
+ * node is more than 1GB, we reserve the top 256MB for the capture kernel */
+static void reserve_crashm_region(int node, unsigned long s0, unsigned long e0)
+{
+#ifdef CONFIG_KEXEC
+	if (crashk_res.start == crashk_res.end)
+		return;
+
+	if ((e0 - s0) <= (SZ_1G >> PAGE_SHIFT))
+		return;
+
+	s0 = e0 - (SZ_256M >> PAGE_SHIFT);
+
+	memblock_reserve(PFN_PHYS(s0), (e0 - s0) << PAGE_SHIFT);
+#endif
+}
+
+/*
+ * After the kdump operation is performed to enter the capture kernel, the
+ * memory area used by the previous production kernel should be reserved to
+ * avoid destroy to the captured data.
+ */
+static void reserve_oldmem_region(int node, unsigned long s0, unsigned long e0)
+{
+#ifdef CONFIG_CRASH_DUMP
+	unsigned long s1, e1;
+
+	if (!is_kdump_kernel())
+		return;
+
+	if ((e0 - s0) > (SZ_1G >> PAGE_SHIFT))
+		e0 = e0 - (SZ_256M >> PAGE_SHIFT);
+
+	/* crashmem_start is crashk_res reserved by primary kernel */
+	s1 = PFN_UP(crashmem_start);
+	e1 = PFN_DOWN(crashmem_start + crashmem_size);
+
+	if (node == 0) {
+		memblock_reserve(PFN_PHYS(s0), (s1 - s0) << PAGE_SHIFT);
+		memblock_reserve(PFN_PHYS(e1), (e0 - e1) << PAGE_SHIFT);
+	} else {
+		memblock_reserve(PFN_PHYS(s0), (e0 - s0) << PAGE_SHIFT);
+	}
+#endif
+}
 
 void __init platform_init(void)
 {
@@ -235,10 +387,21 @@ static void __init check_kernel_sections_mem(void)
  */
 static void __init arch_mem_init(char **cmdline_p)
 {
+	unsigned int node;
+	unsigned long start_pfn, end_pfn;
+
 	if (usermem)
 		pr_info("User-defined physical RAM map overwrite\n");
 
 	check_kernel_sections_mem();
+
+	loongarch_reserve_vmcore();
+	loongarch_parse_crashkernel();
+	for_each_online_node(node) {
+		get_pfn_range_for_nid(node, &start_pfn, &end_pfn);
+		reserve_crashm_region(node, start_pfn, end_pfn);
+		reserve_oldmem_region(node, start_pfn, end_pfn);
+	}
 
 	/*
 	 * In order to reduce the possibility of kernel panic when failed to
@@ -301,6 +464,7 @@ static void __init resource_init(void)
 		request_resource(res, &code_resource);
 		request_resource(res, &data_resource);
 		request_resource(res, &bss_resource);
+		request_crashkernel(res);
 	}
 }
 
