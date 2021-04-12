@@ -6,6 +6,7 @@
 boot	:= arch/loongarch/boot
 
 KBUILD_DEFCONFIG := loongson3_defconfig
+KBUILD_DTBS      := dtbs
 
 ifndef CONFIG_SYS_SUPPORTS_ZBOOT
 
@@ -117,10 +118,13 @@ PHONY += vdso_install
 vdso_install:
 	$(Q)$(MAKE) $(build)=arch/loongarch/vdso $@
 
-all:	$(KBUILD_IMAGE)
+all:	$(KBUILD_IMAGE) $(KBUILD_DTBS)
 
 $(KBUILD_IMAGE): vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) $(bootvars-y) $@
+
+# device-trees
+core-y += arch/loongarch/boot/dts/
 
 install:
 ifndef CONFIG_SYS_SUPPORTS_ZBOOT
@@ -133,5 +137,7 @@ endif
 
 define archhelp
 	echo '  install              - install kernel into $(INSTALL_PATH)'
+	echo '  dtbs                 - Device-tree blobs for enabled boards'
+	echo '  dtbs_install         - Install dtbs to $(INSTALL_DTBS_PATH)'
 	echo
 endef

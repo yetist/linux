@@ -40,5 +40,6 @@ extern u64 efi_system_table;
 extern unsigned long fw_arg0, fw_arg1;
 extern struct loongson_board_info b_info;
 extern struct loongson_system_configuration loongson_sysconf;
+extern unsigned long fw_passed_dtb;
 
 #endif /* _ASM_BOOTINFO_H */
