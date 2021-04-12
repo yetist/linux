@@ -117,6 +117,8 @@ config LOONGARCH
 	select MODULES_USE_ELF_RELA if MODULES
 	select NEED_PER_CPU_EMBED_FIRST_CHUNK
 	select NEED_PER_CPU_PAGE_FIRST_CHUNK
+	select OF
+	select OF_EARLY_FLATTREE
 	select PCI
 	select PCI_DOMAINS_GENERIC
 	select PCI_ECAM if ACPI
@@ -127,11 +129,13 @@ config LOONGARCH
 	select RTC_LIB
 	select SMP
 	select SPARSE_IRQ
+	select SYS_SUPPORTS_HIGHMEM
 	select SYS_SUPPORTS_RELOCATABLE
 	select SYSCTL_ARCH_UNALIGN_ALLOW
 	select SYSCTL_ARCH_UNALIGN_NO_WARN
 	select SYSCTL_EXCEPTION_TRACE
 	select SWIOTLB
+	select BUILTIN_DTB
 	select TRACE_IRQFLAGS_SUPPORT
 	select USE_PERCPU_NUMA_NODE_ID
 	select USER_STACKTRACE_SUPPORT
@@ -176,6 +180,19 @@ config STACKTRACE_SUPPORT
 config LOONGARCH_CRC32_SUPPORT
 	bool
 	default y
+
+#
+# - Highmem only makes sense for the 32-bit kernel.
+# - We use SYS_SUPPORTS_HIGHMEM to offer highmem only for systems where we
+#   know they might have memory configurations that could make use of highmem
+#   support.
+#
+config HIGHMEM
+	bool "High Memory Support"
+	depends on 32BIT && CPU_SUPPORTS_HIGHMEM && SYS_SUPPORTS_HIGHMEM
+
+config SYS_SUPPORTS_HIGHMEM
+	bool
 
 config SYS_SUPPORTS_RELOCATABLE
 	bool
@@ -576,6 +593,9 @@ config SECCOMP
 	  If unsure, say Y. Only embedded should say N here.
 
 endmenu
+
+config BUILTIN_DTB
+	bool
 
 config ARCH_SELECT_MEMORY_MODEL
 	def_bool y
