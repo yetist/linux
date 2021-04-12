@@ -123,10 +123,12 @@ config LOONGARCH
 	select PERF_USE_VMALLOC
 	select RTC_LIB
 	select SPARSE_IRQ
+	select SYS_SUPPORTS_HIGHMEM
 	select SYS_SUPPORTS_RELOCATABLE
 	select SYS_SUPPORTS_ZBOOT
 	select SYSCTL_EXCEPTION_TRACE
 	select SWIOTLB
+	select BUILTIN_DTB
 	select TRACE_IRQFLAGS_SUPPORT
 	select USE_PERCPU_NUMA_NODE_ID
 	select ZONE_DMA32
@@ -162,6 +164,19 @@ config STACKTRACE_SUPPORT
 config LOONGARCH_CRC32_SUPPORT
 	bool
 	default y
+
+#
+# - Highmem only makes sense for the 32-bit kernel.
+# - We use SYS_SUPPORTS_HIGHMEM to offer highmem only for systems where we
+#   know they might have memory configurations that could make use of highmem
+#   support.
+#
+config HIGHMEM
+	bool "High Memory Support"
+	depends on 32BIT && CPU_SUPPORTS_HIGHMEM && SYS_SUPPORTS_HIGHMEM
+
+config SYS_SUPPORTS_HIGHMEM
+	bool
 
 config SYS_SUPPORTS_RELOCATABLE
 	bool
@@ -570,6 +585,9 @@ config SECCOMP
 	  If unsure, say Y. Only embedded should say N here.
 
 endmenu
+
+config BUILTIN_DTB
+	bool
 
 config IOREMAP_WITH_TLB
 	bool

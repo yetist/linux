@@ -21,12 +21,15 @@
 #include <linux/ioport.h>
 #include <linux/root_dev.h>
 #include <linux/console.h>
+#include <linux/highmem.h>
 #include <linux/pfn.h>
 #include <linux/platform_device.h>
 #include <linux/kexec.h>
 #include <linux/sizes.h>
 #include <linux/device.h>
 #include <linux/dma-map-ops.h>
+#include <linux/libfdt.h>
+#include <linux/of_fdt.h>
 #include <linux/crash_dump.h>
 #include <linux/suspend.h>
 #include <linux/swiotlb.h>
@@ -171,6 +174,62 @@ static void __init smbios_parse(void)
 	b_info.board_vendor = (void *)dmi_get_system_info(DMI_BOARD_VENDOR);
 	b_info.board_name = (void *)dmi_get_system_info(DMI_BOARD_NAME);
 	dmi_walk(find_tokens, NULL);
+}
+
+static void __init dt_bootmem_init(void)
+{
+	phys_addr_t ramstart, ramend;
+	unsigned long start, end;
+	int i;
+
+	ramstart = memblock_start_of_DRAM();
+	ramend = memblock_end_of_DRAM();
+
+	/* Reserve memory occupied by kernel. */
+	memblock_reserve(__pa_symbol(&_text),
+			__pa_symbol(&_end) - __pa_symbol(&_text));
+
+	/*
+	 * Reserve any memory between the start of RAM and PHYS_OFFSET
+	 */
+	if (ramstart > PHYS_OFFSET)
+		memblock_reserve(PHYS_OFFSET, ramstart - PHYS_OFFSET);
+
+	if (PFN_UP(ramstart) > ARCH_PFN_OFFSET) {
+		pr_info("Wasting %lu bytes for tracking %lu unused pages\n",
+			(unsigned long)((PFN_UP(ramstart) - ARCH_PFN_OFFSET) * sizeof(struct page)),
+			(unsigned long)(PFN_UP(ramstart) - ARCH_PFN_OFFSET));
+	}
+
+	min_low_pfn = ARCH_PFN_OFFSET;
+	max_pfn = PFN_DOWN(ramend);
+	for_each_mem_pfn_range(i, MAX_NUMNODES, &start, &end, NULL) {
+		/*
+		 * Skip highmem here so we get an accurate max_low_pfn if low
+		 * memory stops short of high memory.
+		 * If the region overlaps HIGHMEM_START, end is clipped so
+		 * max_pfn excludes the highmem portion.
+		 */
+		if (start >= PFN_DOWN(HIGHMEM_START))
+			continue;
+		if (end > PFN_DOWN(HIGHMEM_START))
+			end = PFN_DOWN(HIGHMEM_START);
+		if (end > max_low_pfn)
+			max_low_pfn = end;
+	}
+
+	if (min_low_pfn >= max_low_pfn)
+		panic("Incorrect memory mapping !!!");
+
+	if (max_pfn > PFN_DOWN(HIGHMEM_START)) {
+#ifdef CONFIG_HIGHMEM
+		highstart_pfn = PFN_DOWN(HIGHMEM_START);
+		highend_pfn = max_pfn;
+#else
+		max_low_pfn = PFN_DOWN(HIGHMEM_START);
+		max_pfn = max_low_pfn;
+#endif
+	}
 }
 
 static int usermem __initdata;
@@ -404,6 +463,12 @@ static void __init arch_mem_init(char **cmdline_p)
 
 	check_kernel_sections_mem();
 
+	early_init_fdt_reserve_self();
+	early_init_fdt_scan_reserved_mem();
+
+	if (initial_boot_params)
+		dt_bootmem_init();
+
 	loongarch_reserve_vmcore();
 	loongarch_parse_crashkernel();
 	for_each_online_node(node) {
@@ -411,6 +476,8 @@ static void __init arch_mem_init(char **cmdline_p)
 		reserve_crashm_region(node, start_pfn, end_pfn);
 		reserve_oldmem_region(node, start_pfn, end_pfn);
 	}
+
+	device_tree_init();
 
 	/*
 	 * In order to reduce the possibility of kernel panic when failed to
@@ -551,4 +618,19 @@ void __init setup_arch(char **cmdline_p)
 #endif
 
 	paging_init();
+}
+
+#ifdef CONFIG_USE_OF
+unsigned long fw_passed_dtb;
+#endif
+
+#define NR_CELLS 6
+
+void __init device_tree_init(void)
+{
+	if (!initial_boot_params)
+		return;
+
+	if (early_init_dt_verify(initial_boot_params))
+		unflatten_and_copy_device_tree();
 }
