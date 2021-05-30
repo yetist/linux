@@ -144,6 +144,10 @@ config LOCKDEP_SUPPORT
 	bool
 	default y
 
+config STACKTRACE_SUPPORT
+	bool
+	default y
+
 config SYS_SUPPORTS_ZBOOT
 	bool
 	select HAVE_KERNEL_GZIP
