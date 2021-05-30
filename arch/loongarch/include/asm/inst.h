@@ -23,12 +23,33 @@ enum reg1i20_op {
 	lu32id_op	= 0x0b,
 };
 
+enum reg1i21_op {
+	beqz_op		= 0x10,
+	bnez_op		= 0x11,
+};
+
 enum reg2i12_op {
+	addiw_op	= 0x0a,
+	addid_op	= 0x0b,
 	lu52id_op	= 0x0c,
+	ldb_op		= 0xa0,
+	ldh_op		= 0xa1,
+	ldw_op		= 0xa2,
+	ldd_op		= 0xa3,
+	stb_op		= 0xa4,
+	sth_op		= 0xa5,
+	stw_op		= 0xa6,
+	std_op		= 0xa7,
 };
 
 enum reg2i16_op {
 	jirl_op		= 0x13,
+	beq_op		= 0x16,
+	bne_op		= 0x17,
+	blt_op		= 0x18,
+	bge_op		= 0x19,
+	bltu_op		= 0x1a,
+	bgeu_op		= 0x1b,
 };
 
 struct reg0i26_format {
@@ -110,8 +131,13 @@ enum loongarch_gpr {
 	LOONGARCH_GPR_MAX
 };
 
+static inline bool is_branch_insn(union loongarch_instruction insn)
+{
+	return insn.reg1i21_format.opcode >= beqz_op &&
+			insn.reg1i21_format.opcode <= bgeu_op;
+}
+
 u32 larch_insn_gen_lu32id(enum loongarch_gpr rd, int imm);
 u32 larch_insn_gen_lu52id(enum loongarch_gpr rd, enum loongarch_gpr rj, int imm);
 u32 larch_insn_gen_jirl(enum loongarch_gpr rd, enum loongarch_gpr rj, unsigned long pc, unsigned long dest);
-
 #endif /* _ASM_INST_H */

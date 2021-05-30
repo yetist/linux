@@ -115,6 +115,7 @@ config LOONGARCH
 	select SWIOTLB
 	select TRACE_IRQFLAGS_SUPPORT
 	select USE_PERCPU_NUMA_NODE_ID
+	select USER_STACKTRACE_SUPPORT
 	select ZONE_DMA32
 
 config 32BIT
@@ -137,6 +138,10 @@ config L1_CACHE_SHIFT
 	default "6"
 
 config LOCKDEP_SUPPORT
+	bool
+	default y
+
+config STACKTRACE_SUPPORT
 	bool
 	default y
 
