@@ -8,6 +8,9 @@
 #include <linux/types.h>
 #include <asm/asm.h>
 
+#define INSN_NOP 0x03400000
+#define INSN_BREAK 0x002a0000
+
 #define ADDR_IMMMASK_LU52ID	0xFFF0000000000000
 #define ADDR_IMMMASK_LU32ID	0x000FFFFF00000000
 #define ADDR_IMMMASK_ADDU16ID	0x00000000FFFF0000
@@ -18,14 +21,28 @@
 
 #define ADDR_IMM(addr, INSN)	((addr & ADDR_IMMMASK_##INSN) >> ADDR_IMMSHIFT_##INSN)
 
+#define Inst_UncondBranchSIMM(x) \
+	((int)((((LOONGARCHInst(x) & 0x3ff) | ((LOONGARCHInst(x) & 0x200) ? 0xfffffc00 : 0)) << 16) \
+	| ((LOONGARCHInst(x) & 0x3fffc00) >> 10)))
+
+enum reg0i26_op {
+	b_op		= 0x14,
+	bl_op		= 0x15,
+};
+
 enum reg1i20_op {
 	lu12iw_op	= 0x0a,
 	lu32id_op	= 0x0b,
+	pcaddi_op	= 0x0c,
+	pcaddu12i_op	= 0x0e,
+	pcaddu18i_op	= 0x0f,
 };
 
 enum reg1i21_op {
 	beqz_op		= 0x10,
 	bnez_op		= 0x11,
+	bceqz_op	= 0x12,
+	bcnez_op	= 0x12,
 };
 
 enum reg2i12_op {
@@ -130,6 +147,12 @@ enum loongarch_gpr {
 	LOONGARCH_GPR_S8,
 	LOONGARCH_GPR_MAX
 };
+
+static inline bool is_pc_insn(union loongarch_instruction insn)
+{
+	return insn.reg1i20_format.opcode >= pcaddi_op &&
+			insn.reg1i20_format.opcode <= pcaddu18i_op;
+}
 
 static inline bool is_branch_insn(union loongarch_instruction insn)
 {
