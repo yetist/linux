@@ -275,7 +275,9 @@ unsigned long __get_wchan(struct task_struct *task)
 	 * Just calculate a simpler wchan value here.
 	 * Do nothing here.
 	 */
-#else /* CONFIG_UNWINDER_PROLOGUE */
+	return 0;
+#endif
+
 	stack_page_end = stack_page + THREAD_SIZE - 32;
 	frame = thread_saved_fp(task);
 
@@ -289,9 +291,11 @@ unsigned long __get_wchan(struct task_struct *task)
 	state.stack_info.begin = stack_page;
 	state.stack_info.end = stack_page_end;
 	state.stack_info.next_sp = 0;
+	state.pc = pc;
+#ifdef CONFIG_UNWINDER_PROLOGUE
 	state.enable = true;
 	state.first = true;
-	state.pc = pc;
+#endif
 
 	while (in_sched_functions(pc)) {
 		if (!unwind_next_frame(&state)) {
@@ -302,7 +306,6 @@ unsigned long __get_wchan(struct task_struct *task)
 	}
 
 out:
-#endif /* CONFIG_UNWINDER_GUESS */
 
 	put_task_stack(task);
 	return pc;
