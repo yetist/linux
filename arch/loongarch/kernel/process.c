@@ -205,9 +205,11 @@ unsigned long __get_wchan(struct task_struct *task)
 
 	unwind_start(&state, task, NULL);
 	state.sp = thread_saved_fp(task);
-	get_stack_info(state.sp, state.task, &state.stack_info);
 	state.pc = thread_saved_ra(task);
-#ifdef CONFIG_UNWINDER_PROLOGUE
+	get_stack_info(state.sp, state.task, &state.stack_info);
+#ifdef CONFIG_UNWINDER_ORC
+	state.type = UNWINDER_ORC;
+#elif defined(CONFIG_UNWINDER_PROLOGUE)
 	state.type = UNWINDER_PROLOGUE;
 #endif
 	for (; !unwind_done(&state); unwind_next_frame(&state)) {

@@ -12,6 +12,7 @@
 #include <asm/asm-offsets.h>
 #include <asm/loongarch.h>
 #include <asm/thread_info.h>
+#include <asm/unwind_hints.h>
 
 /* Make the addition of cfi info a little easier. */
 	.macro cfi_rel_offset reg offset=0 docfi=0
@@ -149,6 +150,7 @@
 	cfi_st  u0, PT_R21, \docfi
 	csrrd	u0, PERCPU_BASE_KS
 9:
+	UNWIND_HINT_REGS
 	.endm
 
 	.macro	SAVE_ALL docfi=0
@@ -206,6 +208,7 @@
 
 	.macro	RESTORE_SP_AND_RET docfi=0
 	cfi_ld	sp, PT_R3, \docfi
+	UNWIND_HINT sp_reg=ORC_REG_SP type=ORC_TYPE_CALL
 	ertn
 	.endm
 

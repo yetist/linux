@@ -45,6 +45,7 @@
 #include <asm/sections.h>
 #include <asm/setup.h>
 #include <asm/time.h>
+#include <asm/unwind.h>
 
 #define SMBIOS_BIOSSIZE_OFFSET		0x09
 #define SMBIOS_BIOSEXTERN_OFFSET	0x13
@@ -431,6 +432,7 @@ void __init setup_arch(char **cmdline_p)
 {
 	cpu_probe();
 	*cmdline_p = boot_command_line;
+	unwind_init();
 
 	init_environ();
 	efi_init();
