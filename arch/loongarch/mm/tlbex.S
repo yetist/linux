@@ -19,6 +19,7 @@
 	li.w	a1, \write
 	la.abs	t0, do_page_fault
 	jirl    ra, t0, 0
+	UNWIND_HINT_REGS
 	RESTORE_ALL_AND_RET
 	SYM_FUNC_END(tlb_do_page_fault_\write)
 	.endm
@@ -35,6 +36,7 @@ SYM_FUNC_START(handle_tlb_protect)
 	REG_S	a2, sp, PT_BVADDR
 	la.abs	t0, do_page_fault
 	jirl    ra, t0, 0
+	UNWIND_HINT_REGS
 	RESTORE_ALL_AND_RET
 SYM_FUNC_END(handle_tlb_protect)
 
