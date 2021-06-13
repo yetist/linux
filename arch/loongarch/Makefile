@@ -80,6 +80,7 @@ endif
 
 cflags-y += -ffreestanding
 cflags-y += $(call cc-option, -mno-check-zero-division)
+cflags-y += $(call cc-option, -mno-stackrealign)
 
 ifndef CONFIG_PHYSICAL_START
 load-y		= 0x9000000000200000

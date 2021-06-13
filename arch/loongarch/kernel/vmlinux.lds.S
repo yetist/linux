@@ -2,6 +2,7 @@
 #include <linux/sizes.h>
 #include <asm/asm-offsets.h>
 #include <asm/thread_info.h>
+#include <asm/orc_lookup.h>
 
 #define PAGE_SIZE _PAGE_SIZE
 #define RO_EXCEPTION_TABLE_ALIGN	4
@@ -126,6 +127,8 @@ SECTIONS
 	_sdata = .;
 	RO_DATA(4096)
 	RW_DATA(1 << CONFIG_L1_CACHE_SHIFT, PAGE_SIZE, THREAD_SIZE)
+
+	ORC_UNWIND_TABLE
 
 	.sdata : {
 		*(.sdata)
