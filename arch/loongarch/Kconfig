@@ -130,6 +130,7 @@ config LOONGARCH
 	select TRACE_IRQFLAGS_SUPPORT
 	select USE_PERCPU_NUMA_NODE_ID
 	select ZONE_DMA32
+	select LOONGARCH_CRC32_SUPPORT
 
 config 32BIT
 	bool
@@ -155,6 +156,10 @@ config LOCKDEP_SUPPORT
 	default y
 
 config STACKTRACE_SUPPORT
+	bool
+	default y
+
+config LOONGARCH_CRC32_SUPPORT
 	bool
 	default y
 
