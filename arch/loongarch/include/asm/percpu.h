@@ -8,7 +8,7 @@
 #include <asm/cmpxchg.h>
 
 /* Use r21 for fast access */
-register unsigned long __my_cpu_offset __asm__("$r21");
+register unsigned long __my_cpu_offset __asm__("$x");
 
 static inline void set_my_cpu_offset(unsigned long off)
 {
