@@ -45,10 +45,34 @@ enum reg1i21_op {
 	bcnez_op	= 0x12,
 };
 
+enum reg2_op {
+	revb2h_op	= 0x0c,
+	revb4h_op	= 0x0d,
+	revb2w_op	= 0x0e,
+	revbd_op	= 0x0f,
+	revh2w_op	= 0x10,
+	revhd_op	= 0x11,
+};
+
+enum reg2i5_op {
+	slliw_op	= 0x81,
+	srliw_op	= 0x89,
+	sraiw_op 	= 0x91,
+};
+
+enum reg2i6_op {
+	sllid_op	= 0x41,
+	srlid_op	= 0x45,
+	sraid_op	= 0x49,
+};
+
 enum reg2i12_op {
 	addiw_op	= 0x0a,
 	addid_op	= 0x0b,
 	lu52id_op	= 0x0c,
+	andi_op		= 0x0d,
+	ori_op		= 0x0e,
+	xori_op		= 0x0f,
 	ldb_op		= 0xa0,
 	ldh_op		= 0xa1,
 	ldw_op		= 0xa2,
@@ -57,6 +81,9 @@ enum reg2i12_op {
 	sth_op		= 0xa5,
 	stw_op		= 0xa6,
 	std_op		= 0xa7,
+	ldbu_op		= 0xa8,
+	ldhu_op		= 0xa9,
+	ldwu_op		= 0xaa,
 };
 
 enum reg2i16_op {
@@ -67,6 +94,52 @@ enum reg2i16_op {
 	bge_op		= 0x19,
 	bltu_op		= 0x1a,
 	bgeu_op		= 0x1b,
+};
+
+enum reg3_op {
+	addw_op		= 0x20,
+	addd_op		= 0x21,
+	subw_op		= 0x22,
+	subd_op		= 0x23,
+	nor_op		= 0x28,
+	and_op		= 0x29,
+	or_op		= 0x2a,
+	xor_op		= 0x2b,
+	orn_op		= 0x2c,
+	andn_op		= 0x2d,
+	sllw_op		= 0x2e,
+	srlw_op		= 0x2f,
+	sraw_op		= 0x30,
+	slld_op		= 0x31,
+	srld_op		= 0x32,
+	srad_op		= 0x33,
+	mulw_op		= 0x38,
+	mulhw_op	= 0x39,
+	mulhwu_op	= 0x3a,
+	muld_op		= 0x3b,
+	mulhd_op	= 0x3c,
+	mulhdu_op	= 0x3d,
+	divw_op		= 0x42,
+	modw_op		= 0x41,
+	divwu_op	= 0x42,
+	modwu_op	= 0x43,
+	divd_op		= 0x44,
+	modd_op		= 0x45,
+	divdu_op	= 0x46,
+	moddu_op	= 0x47,
+	ldxb_op		= 0x7000,
+	ldxh_op		= 0x7008,
+	ldxw_op		= 0x7010,
+	ldxd_op		= 0x7018,
+	stxb_op		= 0x7020,
+	stxh_op		= 0x7028,
+	stxw_op		= 0x7030,
+	stxd_op		= 0x7038,
+	ldxbu_op	= 0x7040,
+	ldxhu_op	= 0x7048,
+	ldxwu_op	= 0x7050,
+	amaddw_op	= 0x70c2,
+	amaddd_op	= 0x70c3,
 };
 
 struct reg0i26_format {
@@ -88,6 +161,26 @@ struct reg1i21_format {
 	unsigned int opcode : 6;
 };
 
+struct reg2_format {
+	unsigned int rd : 5;
+	unsigned int rj : 5;
+	unsigned int opcode : 22;
+};
+
+struct reg2i5_format {
+	unsigned int rd : 5;
+	unsigned int rj : 5;
+	unsigned int immediate : 5;
+	unsigned int opcode : 17;
+};
+
+struct reg2i6_format {
+	unsigned int rd : 5;
+	unsigned int rj : 5;
+	unsigned int immediate : 6;
+	unsigned int opcode : 16;
+};
+
 struct reg2i12_format {
 	unsigned int rd : 5;
 	unsigned int rj : 5;
@@ -102,13 +195,24 @@ struct reg2i16_format {
 	unsigned int opcode : 6;
 };
 
+struct reg3_format {
+	unsigned int rd : 5;
+	unsigned int rj : 5;
+	unsigned int rk : 5;
+	unsigned int opcode : 17;
+};
+
 union loongarch_instruction {
 	unsigned int word;
-	struct reg0i26_format reg0i26_format;
-	struct reg1i20_format reg1i20_format;
-	struct reg1i21_format reg1i21_format;
-	struct reg2i12_format reg2i12_format;
-	struct reg2i16_format reg2i16_format;
+	struct reg0i26_format	reg0i26_format;
+	struct reg1i20_format	reg1i20_format;
+	struct reg1i21_format	reg1i21_format;
+	struct reg2_format	reg2_format;
+	struct reg2i5_format	reg2i5_format;
+	struct reg2i6_format	reg2i6_format;
+	struct reg2i12_format	reg2i12_format;
+	struct reg2i16_format	reg2i16_format;
+	struct reg3_format	reg3_format;
 };
 
 #define LOONGARCH_INSN_SIZE	sizeof(union loongarch_instruction)
