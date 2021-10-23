@@ -46,14 +46,8 @@ extern void __init early_iounmap(void __iomem *addr, unsigned long size);
 #define early_memremap early_ioremap
 #define early_memunmap early_iounmap
 
-static inline void __iomem *ioremap_prot(phys_addr_t offset, unsigned long size,
-					 unsigned long prot_val)
-{
-	if (prot_val == _CACHE_CC)
-		return (void __iomem *)(unsigned long)(CACHE_BASE + offset);
-	else
-		return (void __iomem *)(unsigned long)(UNCACHE_BASE + offset);
-}
+#define ioremap_prot ioremap_prot
+extern void __iomem *ioremap_prot(phys_addr_t phys_addr, size_t size, unsigned long prot);
 
 /*
  * ioremap -   map bus memory into CPU space
@@ -66,8 +60,8 @@ static inline void __iomem *ioremap_prot(phys_addr_t offset, unsigned long size,
  * address is not guaranteed to be usable directly as a virtual
  * address.
  */
-#define ioremap(offset, size)					\
-	ioremap_prot((offset), (size), _CACHE_SUC)
+#define ioremap ioremap
+extern void __iomem *ioremap(phys_addr_t phys_addr, size_t size);
 
 /*
  * ioremap_wc - map bus memory into CPU space
@@ -87,8 +81,8 @@ static inline void __iomem *ioremap_prot(phys_addr_t offset, unsigned long size,
  * CPU CCA doesn't support WUC, the method shall fall-back to the
  * _CACHE_SUC option (see cpu_probe() method).
  */
-#define ioremap_wc(offset, size)				\
-	ioremap_prot((offset), (size), _CACHE_WUC)
+#define ioremap_wc ioremap_wc
+extern void __iomem *ioremap_wc(phys_addr_t phys_addr, size_t size);
 
 /*
  * ioremap_cache -  map bus memory into CPU space
@@ -105,12 +99,11 @@ static inline void __iomem *ioremap_prot(phys_addr_t offset, unsigned long size,
  * the CPU.  Also enables full write-combining.	 Useful for some
  * memory-like regions on I/O busses.
  */
-#define ioremap_cache(offset, size)				\
-	ioremap_prot((offset), (size), _CACHE_CC)
+#define ioremap_cache ioremap_cache
+extern void __iomem *ioremap_cache(phys_addr_t phys_addr, size_t size);
 
-static inline void iounmap(const volatile void __iomem *addr)
-{
-}
+#define iounmap iounmap
+extern void iounmap(const volatile void __iomem *addr);
 
 #define mmiowb() asm volatile ("dbar 0" ::: "memory")
 
