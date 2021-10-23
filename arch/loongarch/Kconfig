@@ -104,6 +104,7 @@ config LOONGARCH
 	select HAVE_SYSCALL_TRACEPOINTS
 	select HAVE_TIF_NOHZ
 	select HAVE_VIRT_CPU_ACCOUNTING_GEN if !SMP
+	select IOREMAP_WITH_TLB
 	select IRQ_FORCED_THREADING
 	select IRQ_LOONGARCH_CPU
 	select MODULES_USE_ELF_RELA if MODULES
@@ -176,6 +177,9 @@ config MACH_LOONGSON32
 
 config MACH_LOONGSON64
 	def_bool 64BIT
+
+config FIX_EARLYCON_MEM
+	def_bool y
 
 config PAGE_SIZE_4KB
 	bool
@@ -557,6 +561,9 @@ config SECCOMP
 	  If unsure, say Y. Only embedded should say N here.
 
 endmenu
+
+config IOREMAP_WITH_TLB
+	bool
 
 config ARCH_SELECT_MEMORY_MODEL
 	def_bool y
