@@ -60,12 +60,14 @@ struct symbol {
 	u8 return_thunk      : 1;
 	u8 fentry            : 1;
 	u8 profiling_func    : 1;
+	u8 changed           : 1;
 	struct list_head pv_target;
 };
 
 struct reloc {
 	struct list_head list;
 	struct hlist_node hash;
+	struct reloc *next;
 	union {
 		GElf_Rela rela;
 		GElf_Rel  rel;
@@ -145,11 +147,12 @@ static inline bool has_multiple_files(struct elf *elf)
 struct elf *elf_open_read(const char *name, int flags);
 struct section *elf_create_section(struct elf *elf, const char *name, unsigned int sh_flags, size_t entsize, int nr);
 
-int elf_add_reloc(struct elf *elf, struct section *sec, unsigned long offset,
-		  unsigned int type, struct symbol *sym, s64 addend);
-int elf_add_reloc_to_insn(struct elf *elf, struct section *sec,
-			  unsigned long offset, unsigned int type,
-			  struct section *insn_sec, unsigned long insn_off);
+struct reloc *elf_add_reloc(struct elf *elf, struct section *sec, unsigned long offset,
+			    unsigned int type, struct symbol *sym, s64 addend, struct reloc *prev);
+struct reloc *elf_add_reloc_to_insn(struct elf *elf, struct section *sec,
+				    unsigned long offset, unsigned int type,
+				    struct section *insn_sec, unsigned long insn_off,
+				    struct reloc *prev);
 
 int elf_write_insn(struct elf *elf, struct section *sec,
 		   unsigned long offset, unsigned int len,
