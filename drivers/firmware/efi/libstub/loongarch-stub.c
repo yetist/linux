@@ -15,6 +15,7 @@ typedef void __noreturn (*kernel_entry_t)(bool efi, unsigned long fdt);
 extern int kernel_asize;
 extern int kernel_fsize;
 extern int kernel_offset;
+extern unsigned long kernel_vaddr;
 extern kernel_entry_t kernel_entry;
 
 static efi_guid_t screen_info_guid = LINUX_EFI_LARCH_SCREEN_INFO_TABLE_GUID;
@@ -69,7 +70,7 @@ efi_status_t handle_kernel_image(unsigned long *image_addr,
 	kernel_addr = (unsigned long)&kernel_offset - kernel_offset;
 
 	status = efi_relocate_kernel(&kernel_addr, kernel_fsize, kernel_asize,
-				     PHYSADDR(VMLINUX_LOAD_ADDRESS), SZ_2M, 0x0);
+			    PHYSADDR(kernel_vaddr), SZ_2M, PHYSADDR(kernel_vaddr));
 
 	*image_addr = kernel_addr;
 	*image_size = kernel_asize;
@@ -82,7 +83,7 @@ void __noreturn efi_enter_kernel(unsigned long entrypoint, unsigned long fdt, un
 	kernel_entry_t real_kernel_entry;
 
 	real_kernel_entry = (kernel_entry_t)
-		((unsigned long)&kernel_entry - entrypoint + VMLINUX_LOAD_ADDRESS);
+		((unsigned long)&kernel_entry - entrypoint + kernel_vaddr);
 
 	real_kernel_entry(true, fdt);
 }
