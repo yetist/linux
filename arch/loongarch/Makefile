@@ -7,11 +7,30 @@ boot	:= arch/loongarch/boot
 
 KBUILD_DEFCONFIG := loongson3_defconfig
 
+ifndef CONFIG_SYS_SUPPORTS_ZBOOT
+
 ifndef CONFIG_EFI_STUB
 KBUILD_IMAGE	= $(boot)/vmlinux
 else
 KBUILD_IMAGE	= $(boot)/vmlinux.efi
 endif
+
+else
+
+ifndef CONFIG_EFI_STUB
+KBUILD_IMAGE	= $(boot)/vmlinuz
+else
+KBUILD_IMAGE	= $(boot)/vmlinuz.efi
+endif
+
+endif
+
+load-y		= 0x9000000000200000
+bootvars-y	= VMLINUX_LOAD_ADDRESS=$(load-y)
+
+archscripts: scripts_basic
+	$(Q)$(MAKE) $(build)=arch/loongarch/tools elf-entry
+	$(Q)$(MAKE) $(build)=arch/loongarch/tools calc_vmlinuz_load_addr
 
 #
 # Select the object file format to substitute into the linker script.
@@ -47,9 +66,6 @@ KBUILD_CFLAGS_MODULE		+= -fplt -Wa,-mla-global-with-abs,-mla-local-with-abs
 
 cflags-y += -ffreestanding
 cflags-y += $(call cc-option, -mno-check-zero-division)
-
-load-y		= 0x9000000000200000
-bootvars-y	= VMLINUX_LOAD_ADDRESS=$(load-y)
 
 drivers-$(CONFIG_PCI)		+= arch/loongarch/pci/
 
@@ -97,7 +113,11 @@ $(KBUILD_IMAGE): vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) $(bootvars-y) $@
 
 install:
+ifndef CONFIG_SYS_SUPPORTS_ZBOOT
 	$(Q)install -D -m 755 $(KBUILD_IMAGE) $(INSTALL_PATH)/vmlinux-$(KERNELRELEASE)
+else
+	$(Q)install -D -m 755 $(KBUILD_IMAGE) $(INSTALL_PATH)/vmlinuz-$(KERNELRELEASE)
+endif
 	$(Q)install -D -m 644 .config $(INSTALL_PATH)/config-$(KERNELRELEASE)
 	$(Q)install -D -m 644 System.map $(INSTALL_PATH)/System.map-$(KERNELRELEASE)
 

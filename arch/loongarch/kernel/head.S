@@ -34,6 +34,7 @@ pe_header:
 
 SYM_DATA(kernel_asize, .long _end - _text);
 SYM_DATA(kernel_fsize, .long _edata - _text);
+SYM_DATA(kernel_vaddr, .quad VMLINUX_LOAD_ADDRESS);
 SYM_DATA(kernel_offset, .long kernel_offset - _text);
 
 #endif
