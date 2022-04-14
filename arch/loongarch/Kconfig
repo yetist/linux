@@ -114,6 +114,7 @@ config LOONGARCH
 	select PERF_USE_VMALLOC
 	select RTC_LIB
 	select SPARSE_IRQ
+	select SYS_SUPPORTS_ZBOOT
 	select SYSCTL_EXCEPTION_TRACE
 	select SWIOTLB
 	select TRACE_IRQFLAGS_SUPPORT
@@ -150,6 +151,16 @@ config L1_CACHE_SHIFT
 config LOCKDEP_SUPPORT
 	bool
 	default y
+
+config SYS_SUPPORTS_ZBOOT
+	bool
+	select HAVE_KERNEL_GZIP
+	select HAVE_KERNEL_BZIP2
+	select HAVE_KERNEL_LZ4
+	select HAVE_KERNEL_LZMA
+	select HAVE_KERNEL_LZO
+	select HAVE_KERNEL_XZ
+	select HAVE_KERNEL_ZSTD
 
 # MACH_LOONGSON32 and MACH_LOONGSON64 are delibrately carried over from the
 # MIPS Loongson code, to preserve Loongson-specific code paths in drivers that

@@ -3,4 +3,4 @@ obj-y += mm/
 obj-y += vdso/
 
 # for cleaning
-subdir- += boot
+subdir- += boot tools

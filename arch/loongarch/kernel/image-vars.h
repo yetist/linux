@@ -22,6 +22,7 @@ __efistub_strrchr		= strrchr;
 __efistub_kernel_entry		= kernel_entry;
 __efistub_kernel_asize		= kernel_asize;
 __efistub_kernel_fsize		= kernel_fsize;
+__efistub_kernel_vaddr		= kernel_vaddr;
 __efistub_kernel_offset		= kernel_offset;
 
 #endif
