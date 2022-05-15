@@ -60,7 +60,12 @@ KBUILD_CPPFLAGS += -DVMLINUX_LOAD_ADDRESS=$(load-y)
 # This is required to get dwarf unwinding tables into .debug_frame
 # instead of .eh_frame so we don't discard them.
 KBUILD_CFLAGS += -fno-asynchronous-unwind-tables
+
 KBUILD_CFLAGS += -isystem $(shell $(CC) -print-file-name=include)
+
+# Don't emit unaligned accesses.
+# Not all LoongArch cores support unaligned access, and as kernel we can't
+# rely on others to provide emulation for these accesses.
 KBUILD_CFLAGS += $(call cc-option,-mstrict-align)
 
 KBUILD_LDFLAGS	+= -m $(ld-emul)
