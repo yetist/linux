@@ -22,13 +22,13 @@
 /*
  * On LoongArch, I/O ports mappring is following:
  *
- *		|	  ....		|
- *		|-----------------------|
- *		| pci io ports(64K~32M)	|
- *		|-----------------------|
- *		| isa io ports(0  ~16K)	|
+ *              |         ....          |
+ *              |-----------------------|
+ *              | pci io ports(64K~32M) |
+ *              |-----------------------|
+ *              | isa io ports(0  ~16K) |
  * PCI_IOBASE ->|-----------------------|
- *		|	  ....		|
+ *              |         ....          |
  */
 #define PCI_IOBASE	((void __iomem *)(vm_map_base + (2 * PAGE_SIZE)))
 #define PCI_IOSIZE	SZ_32M
