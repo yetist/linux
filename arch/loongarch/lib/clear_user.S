@@ -34,7 +34,7 @@ SYM_FUNC_START(__clear_user)
 	addi.d	a1, a1, -1
 	bgt	a1, zero, 1b
 
-2:	move	a0, a1
+2:	move	a0, zero
 	jr	ra
 
 	fixup_ex 1, 3, 0, 1
