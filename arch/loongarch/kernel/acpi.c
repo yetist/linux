@@ -146,7 +146,7 @@ static int set_processor_mask(u32 id, u32 flags)
 	int cpu, cpuid = id;
 
 	if (num_processors >= nr_cpu_ids) {
-		pr_warn("acpi: nr_cpus/possible_cpus limit of %i reached."
+		pr_warn(PREFIX "nr_cpus/possible_cpus limit of %i reached."
 			" processor 0x%x ignored.\n", nr_cpu_ids, cpuid);
 
 		return -ENODEV;
