@@ -38,35 +38,32 @@
  * Macros to handle different pointer/register sizes for 32/64-bit code
  */
 
-/*
- * Size of a register
- */
-#ifndef __loongarch64
-#define SZREG	4
+
+#if __loongarch_grlen == 64
+#define __REG_SEL(a, b)	__ASM_STR(a)
+#elif __loongarch_grlen == 32
+#define __REG_SEL(a, b)	__ASM_STR(b)
 #else
-#define SZREG	8
+#error "Unexpected __loongarch_grlen"
 #endif
 
 /*
- * Use the following macros in assemblercode to load/store registers,
- * pointers etc.
+ * Size of a register
  */
-#if (SZREG == 4)
-#define REG_L		ld.w
-#define REG_S		st.w
-#define REG_ADD		add.w
-#define REG_SUB		sub.w
-#else /* SZREG == 8 */
-#define REG_L		ld.d
-#define REG_S		st.d
-#define REG_ADD		add.d
-#define REG_SUB		sub.d
-#endif
+#define SZREG	__REG_SEL(8, 4)
+
+/*
+ * Use the following macros in assembly to load/store registers, pointers etc.
+ */
+#define REG_L		__REG_SEL(ld.d, ld.w)
+#define REG_S		__REG_SEL(st.d, st.w)
+#define REG_ADD		__REG_SEL(add.d, add.w)
+#define REG_SUB		__REG_SEL(sub.d, sub.w)
 
 /*
  * How to add/sub/load/store/shift C int variables.
  */
-#if (_LOONGARCH_SZINT == 32)
+#if (__SIZEOF_INT__ == 4)
 #define INT_ADD		add.w
 #define INT_ADDI	addi.w
 #define INT_SUB		sub.w
@@ -80,7 +77,7 @@
 #define INT_SRAV	sra.w
 #endif
 
-#if (_LOONGARCH_SZINT == 64)
+#if (__SIZEOF_INT__ == 8)
 #define INT_ADD		add.d
 #define INT_ADDI	addi.d
 #define INT_SUB		sub.d
@@ -97,7 +94,7 @@
 /*
  * How to add/sub/load/store/shift C long variables.
  */
-#if (_LOONGARCH_SZLONG == 32)
+#if (__SIZEOF_LONG__ == 4)
 #define LONG_ADD	add.w
 #define LONG_ADDI	addi.w
 #define LONG_SUB	sub.w
@@ -118,7 +115,7 @@
 #define LONGLOG		2
 #endif
 
-#if (_LOONGARCH_SZLONG == 64)
+#if (__SIZEOF_LONG__ == 8)
 #define LONG_ADD	add.d
 #define LONG_ADDI	addi.d
 #define LONG_SUB	sub.d
@@ -142,7 +139,7 @@
 /*
  * How to add/sub/load/store/shift pointers.
  */
-#if (_LOONGARCH_SZPTR == 32)
+#if (__SIZEOF_POINTER__ == 4)
 #define PTR_ADD		add.w
 #define PTR_ADDI	addi.w
 #define PTR_SUB		sub.w
@@ -163,7 +160,7 @@
 #define PTRLOG		2
 #endif
 
-#if (_LOONGARCH_SZPTR == 64)
+#if (__SIZEOF_POINTER__ == 8)
 #define PTR_ADD		add.d
 #define PTR_ADDI	addi.d
 #define PTR_SUB		sub.d
