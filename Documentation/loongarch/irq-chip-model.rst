@@ -1,5 +1,10 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+.. include:: ./disclaimer-translation.rst
+
+:Original: Documentation/tranlations/zh_CN/loongarch/irq-chip-model.rst
+:Translator: Huacai Chen <chenhuacai@loongson.cn>
+
 =======================================
 IRQ chip model (hierarchy) of LoongArch
 =======================================
