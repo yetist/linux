@@ -333,9 +333,6 @@ config SMP
 	  uniprocessor machines. On a uniprocessor machine, the kernel
 	  will run faster if you say N here.
 
-	  People using multiprocessor machines who say Y here should also say
-	  Y to "Enhanced Real Time Clock Support", below.
-
 	  See also the SMP-HOWTO available at
 	  <http://www.tldp.org/docs.html#howto>.
 
