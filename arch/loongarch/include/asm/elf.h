@@ -12,13 +12,6 @@
 #include <asm/current.h>
 #include <asm/vdso.h>
 
-/* ELF header e_flags defines. */
-
-/* The ABI of a file. */
-#define EF_LARCH_ABI_LP32		0x00000001	/* LP32 ABI.  */
-#define EF_LARCH_ABI_LP64		0x00000003	/* LP64 ABI  */
-#define EF_LARCH_ABI			0x00000003
-
 /* LoongArch relocation types used by the dynamic linker */
 #define R_LARCH_NONE				0
 #define R_LARCH_32				1
