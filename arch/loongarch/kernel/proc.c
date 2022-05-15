@@ -40,11 +40,9 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		return 0;
 #endif
 
-	/*
-	 * For the first processor also print the system type
-	 */
+	/* Print the system type before the first processor */
 	if (n == 0)
-		seq_printf(m, "system type\t\t: %s\n", get_system_type());
+		seq_printf(m, "system type\t\t: %s\n\n", get_system_type());
 
 	seq_printf(m, "processor\t\t: %ld\n", n);
 	seq_printf(m, "package\t\t\t: %d\n", cpu_data[n].package);
