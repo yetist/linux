@@ -151,6 +151,9 @@ config LOCKDEP_SUPPORT
 	bool
 	default y
 
+# This symbol, and MACH_LOONGSON64, are delibrate carried over from the MIPS
+# Loongson code, to preserve Loongson-specific code paths in drivers that are
+# shared between architectures, and specifically expect the symbols.
 config MACH_LOONGSON32
 	def_bool 32BIT
 
