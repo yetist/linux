@@ -362,11 +362,10 @@ config NUMA
 	bool "NUMA Support"
 	select ACPI_NUMA if ACPI
 	help
-	  Say Y to compile the kernel to support NUMA (Non-Uniform Memory
-	  Access).  This option improves performance on systems with more
+	  Say Y to compile the kernel with NUMA (Non-Uniform Memory Access)
+	  support.  This option improves performance on systems with more
 	  than two nodes; on two node systems it is generally better to
-	  leave it disabled; on single node systems disable this option
-	  disabled.
+	  leave it disabled; disable this option on single node systems.
 
 config NODES_SHIFT
 	int
