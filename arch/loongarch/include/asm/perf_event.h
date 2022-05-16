@@ -6,5 +6,5 @@
 
 #ifndef __LOONGARCH_PERF_EVENT_H__
 #define __LOONGARCH_PERF_EVENT_H__
-/* Leave it empty here. The file is required by linux/perf_event.h */
+/* Nothing to show here; the file is required by linux/perf_event.h. */
 #endif /* __LOONGARCH_PERF_EVENT_H__ */

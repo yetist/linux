@@ -78,8 +78,6 @@ static inline u32 read_cpucfg(u32 reg)
 #define REG_A5		0x9
 #define REG_A6		0xa
 #define REG_A7		0xb
-#define REG_V0		REG_A0
-#define REG_V1		REG_A1
 #define REG_T0		0xc
 #define REG_T1		0xd
 #define REG_T2		0xe
@@ -89,7 +87,7 @@ static inline u32 read_cpucfg(u32 reg)
 #define REG_T6		0x12
 #define REG_T7		0x13
 #define REG_T8		0x14
-#define REG_U0		0x15 /* Kernel use it as percpu base */
+#define REG_U0		0x15 /* Kernel uses it as percpu base */
 #define REG_FP		0x16
 #define REG_S0		0x17
 #define REG_S1		0x18

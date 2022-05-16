@@ -47,10 +47,12 @@ static inline unsigned long array_index_mask_nospec(unsigned long index,
 
 	__asm__ __volatile__(
 		"sltu	%0, %1, %2\n\t"
-#if (_LOONGARCH_SZLONG == 32)
+#if (__loongarch_grlen == 32)
 		"sub.w	%0, $r0, %0\n\t"
-#elif (_LOONGARCH_SZLONG == 64)
+#elif (__loongarch_grlen == 64)
 		"sub.d	%0, $r0, %0\n\t"
+#else
+#error unknown LoongArch GRLEN
 #endif
 		: "=r" (mask)
 		: "r" (index), "r" (size)

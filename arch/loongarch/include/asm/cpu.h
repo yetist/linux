@@ -9,13 +9,13 @@
 #define _ASM_CPU_H
 
 /*
- * As described in LoongArch specs from Loongson Technology, the PRID register
- * (CPUCFG.00) is defined in this way:
+ * As defined by Loongson Technology, the PRID register (CPUCFG.00) has the
+ * following layout:
  *
  * +---------------+----------------+------------+--------------------+
  * | Reserved      | Company ID     | Series ID  |  Product ID        |
  * +---------------+----------------+------------+--------------------+
- *  31		 24 23		  16 15	       12 11		     0
+ *  31           24 23            16 15        12 11                 0
  */
 
 /*
@@ -74,10 +74,10 @@ enum cpu_type_enum {
  */
 #define CPU_FEATURE_CPUCFG		0	/* CPU has CPUCFG */
 #define CPU_FEATURE_LAM			1	/* CPU has Atomic instructions */
-#define CPU_FEATURE_UAL			2	/* CPU has Unaligned Access support */
+#define CPU_FEATURE_UAL			2	/* CPU supports unaligned accesses */
 #define CPU_FEATURE_FPU			3	/* CPU has FPU */
-#define CPU_FEATURE_LSX			4	/* CPU has 128bit SIMD instructions */
-#define CPU_FEATURE_LASX		5	/* CPU has 256bit SIMD instructions */
+#define CPU_FEATURE_LSX			4	/* CPU has LSX (128-bit SIMD) */
+#define CPU_FEATURE_LASX		5	/* CPU has LASX (256-bit SIMD) */
 #define CPU_FEATURE_COMPLEX		6	/* CPU has Complex instructions */
 #define CPU_FEATURE_CRYPTO		7	/* CPU has Crypto instructions */
 #define CPU_FEATURE_LVZ			8	/* CPU has Virtualization extension */
@@ -85,18 +85,18 @@ enum cpu_type_enum {
 #define CPU_FEATURE_LBT_ARM		10	/* CPU has ARM Binary Translation */
 #define CPU_FEATURE_LBT_MIPS		11	/* CPU has MIPS Binary Translation */
 #define CPU_FEATURE_TLB			12	/* CPU has TLB */
-#define CPU_FEATURE_CSR			13	/* CPU has CSR feature */
+#define CPU_FEATURE_CSR			13	/* CPU has CSR */
 #define CPU_FEATURE_WATCH		14	/* CPU has watchpoint registers */
 #define CPU_FEATURE_VINT		15	/* CPU has vectored interrupts */
 #define CPU_FEATURE_CSRIPI		16	/* CPU has CSR-IPI */
 #define CPU_FEATURE_EXTIOI		17	/* CPU has EXT-IOI */
 #define CPU_FEATURE_PREFETCH		18	/* CPU has prefetch instructions */
 #define CPU_FEATURE_PMP			19	/* CPU has perfermance counter */
-#define CPU_FEATURE_SCALEFREQ		20	/* CPU support scale cpufreq */
-#define CPU_FEATURE_FLATMODE		21	/* CPU has flatmode */
+#define CPU_FEATURE_SCALEFREQ		20	/* CPU supports cpufreq scaling */
+#define CPU_FEATURE_FLATMODE		21	/* CPU has flat mode */
 #define CPU_FEATURE_EIODECODE		22	/* CPU has EXTIOI interrupt pin decode mode */
 #define CPU_FEATURE_GUESTID		23	/* CPU has GuestID feature */
-#define CPU_FEATURE_HYPERVISOR		24	/* CPU has hypervisor (run in VM) */
+#define CPU_FEATURE_HYPERVISOR		24	/* CPU has hypervisor (running in VM) */
 
 #define LOONGARCH_CPU_CPUCFG		BIT_ULL(CPU_FEATURE_CPUCFG)
 #define LOONGARCH_CPU_LAM		BIT_ULL(CPU_FEATURE_LAM)

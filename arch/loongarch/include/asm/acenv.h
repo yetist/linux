@@ -10,8 +10,9 @@
 #ifndef _ASM_LOONGARCH_ACENV_H
 #define _ASM_LOONGARCH_ACENV_H
 
-/* The head file is required by ACPI core, but we have nothing to fill
- * it now, update it later when needed.
+/*
+ * This header is required by ACPI core, but we have nothing to fill in
+ * right now. Will be updated later when needed.
  */
 
 #endif /* _ASM_LOONGARCH_ACENV_H */

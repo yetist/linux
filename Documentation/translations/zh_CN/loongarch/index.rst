@@ -1,12 +1,9 @@
 .. SPDX-License-Identifier: GPL-2.0
 
-.. include:: ../disclaimer-zh_CN.rst
-
-:Original: Documentation/loongarch/index.rst
-:Translator: Huacai Chen <chenhuacai@loongson.cn>
+.. include:: ./disclaimer-original.rst
 
 =================
-LoongArch特性文档
+LoongArch体系结构
 =================
 
 .. toctree::

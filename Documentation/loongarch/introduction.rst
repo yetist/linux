@@ -1,11 +1,17 @@
 .. SPDX-License-Identifier: GPL-2.0
 
+.. include:: ./disclaimer-translation.rst
+
+:Original: Documentation/tranlations/zh_CN/loongarch/introduction.rst
+:Translator: Huacai Chen <chenhuacai@loongson.cn>
+:Translator: WANG Xuerui <kernel@xen0n.name>
+
 =========================
-Introduction of LoongArch
+Introduction to LoongArch
 =========================
 
-LoongArch is a new RISC ISA, which is a bit like MIPS or RISC-V. LoongArch
-currently has 3 variants: a reduced 32-bit version (LA32R), a standard 32-bit
+LoongArch is a new RISC ISA, which is a bit like MIPS or RISC-V. There are
+currently 3 variants: a reduced 32-bit version (LA32R), a standard 32-bit
 version (LA32S) and a 64-bit version (LA64). There are 4 privilege levels
 (PLVs) defined in LoongArch: PLV0~PLV3, from high to low. Kernel runs at PLV0
 while applications run at PLV3. This document introduces the registers, basic
@@ -15,8 +21,8 @@ Registers
 =========
 
 LoongArch registers include general purpose registers (GPRs), floating point
-registers (FPRs), vector registers (VRs) and control status registers (CSRs)
-used in privileged mode (PLV0).
+registers (FPRs) and vector registers (VRs).
+There are also control status registers (CSRs) used in privileged mode (PLV0).
 
 GPRs
 ----
@@ -40,13 +46,15 @@ Name                Alias             Usage               Preserved
 ``$r4`` ~ ``$r11``  ``$a0`` ~ ``$a7`` Argument registers  No
 ``$r12`` ~ ``$r20`` ``$t0`` ~ ``$t8`` Temp registers      No
 ``$r21``            ``$u0``           Percpu base address Unused
-``$r22``            ``$fp``           Frame pointer       Yes
+``$r22``            ``$fp`` / ``$s9`` Frame pointer or    Yes
+                                      static register
 ``$r23`` ~ ``$r31`` ``$s0`` ~ ``$s8`` Static registers    Yes
 =================== ================= =================== ============
 
 Note: The register ``$r21`` is reserved in the ELF psABI, but used by the
 Linux kernel for storing the percpu base address. It normally has no ABI name,
-but is called ``$u0`` in the kernel.
+but is called ``$u0`` in the kernel. You may also see ``$v0`` or ``$v1`` in
+some old code, they are deprecated aliases of ``$a0`` and ``$a1`` respectively.
 
 FPRs
 ----
@@ -65,6 +73,10 @@ Name                Alias                Usage               Preserved
 ``$f8`` ~ ``$f23``  ``$ft0`` ~ ``$ft15`` Temp registers      No
 ``$f24`` ~ ``$f31`` ``$fs0`` ~ ``$fs7``  Static registers    Yes
 =================== ==================== =================== ============
+
+Note: You may see ``$fv0`` or ``$fv1`` in some old code, they are deprecated
+aliases of ``$fa0`` and ``$fa1`` respectively.
+
 
 VRs
 ----
@@ -184,8 +196,8 @@ Address           Full Name                             Abbrev Name
 0x502             Debug Exception: Saved Data Register  DSAVE
 ================= ===================================== ==============
 
-ERA, TLBRERA, MERREEA and ERA are also known as EPC, TLBREPC, MERREPC and
-DEPC respectively.
+ERA, TLBRERA, MERRERA and DERA are sometimes also known as EPC, TLBREPC, MERREPC
+and DEPC, respectively.
 
 Basic Instruction Set
 =====================
@@ -230,7 +242,7 @@ For brevity, only mnemonics are listed here; please see the
     MUL.W MULH.W MULH.WU DIV.W DIV.WU MOD.W MOD.WU
     MUL.D MULH.D MULH.DU DIV.D DIV.DU MOD.D MOD.DU
     PCADDI PCADDU12I PCADDU18I
-    LU12I.W LU32I.D LU52I.D ADDU16I.D
+    LU12I.W LU32I.D LU52I.D
 
 2. Bit-shift Instructions::
 
@@ -273,7 +285,7 @@ For brevity, only mnemonics are listed here; please see the
 
     CSRRD CSRWR CSRXCHG
     IOCSRRD.B IOCSRRD.H IOCSRRD.W IOCSRRD.D IOCSRWR.B IOCSRWR.H IOCSRWR.W IOCSRWR.D
-    CACOP TLBP(TLBSRCH) TLBRD TLBWR TLBFILL TLBCLR TLBFLUSH INVTLB LDDIR LDPTE
+    CACOP TLBSRCH TLBRD TLBWR TLBFILL TLBCLR TLBFLUSH INVTLB LDDIR LDPTE
 
 Virtual Memory
 ==============

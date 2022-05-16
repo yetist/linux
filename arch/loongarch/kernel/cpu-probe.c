@@ -172,7 +172,7 @@ static void cpu_probe_common(struct cpuinfo_loongarch *c)
 		c->tlbsize = c->tlbsizemtlb + c->tlbsizestlbsets * c->tlbsizestlbways;
 		break;
 	default:
-		pr_warn("Warning: unimplemented tlb type\n");
+		pr_warn("Warning: unknown TLB type\n");
 	}
 }
 
@@ -256,7 +256,7 @@ void cpu_probe(void)
 	struct cpuinfo_loongarch *c = &current_cpu_data;
 
 	/*
-	 * Set a default elf platform, cpu probe may later
+	 * Set a default ELF platform, cpu probe may later
 	 * overwrite it with a more precise value
 	 */
 	set_elf_platform(cpu, "loongarch");

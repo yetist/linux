@@ -40,11 +40,9 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 		return 0;
 #endif
 
-	/*
-	 * For the first processor also print the system type
-	 */
+	/* Print the system type before the first processor */
 	if (n == 0)
-		seq_printf(m, "system type\t\t: %s\n", get_system_type());
+		seq_printf(m, "system type\t\t: %s\n\n", get_system_type());
 
 	seq_printf(m, "processor\t\t: %ld\n", n);
 	seq_printf(m, "package\t\t\t: %d\n", cpu_data[n].package);
@@ -64,24 +62,24 @@ static int show_cpuinfo(struct seq_file *m, void *v)
 
 	seq_printf(m, "ISA\t\t\t:");
 	if (cpu_has_loongarch32)
-		seq_printf(m, "%s", " loongarch32");
+		seq_printf(m, " loongarch32");
 	if (cpu_has_loongarch64)
-		seq_printf(m, "%s", " loongarch64");
+		seq_printf(m, " loongarch64");
 	seq_printf(m, "\n");
 
 	seq_printf(m, "Features\t\t:");
-	if (cpu_has_cpucfg)	seq_printf(m, "%s", " cpucfg");
-	if (cpu_has_lam)	seq_printf(m, "%s", " lam");
-	if (cpu_has_ual)	seq_printf(m, "%s", " ual");
-	if (cpu_has_fpu)	seq_printf(m, "%s", " fpu");
-	if (cpu_has_lsx)	seq_printf(m, "%s", " lsx");
-	if (cpu_has_lasx)	seq_printf(m, "%s", " lasx");
-	if (cpu_has_complex)	seq_printf(m, "%s", " complex");
-	if (cpu_has_crypto)	seq_printf(m, "%s", " crypto");
-	if (cpu_has_lvz)	seq_printf(m, "%s", " lvz");
-	if (cpu_has_lbt_x86)	seq_printf(m, "%s", " lbt_x86");
-	if (cpu_has_lbt_arm)	seq_printf(m, "%s", " lbt_arm");
-	if (cpu_has_lbt_mips)	seq_printf(m, "%s", " lbt_mips");
+	if (cpu_has_cpucfg)	seq_printf(m, " cpucfg");
+	if (cpu_has_lam)	seq_printf(m, " lam");
+	if (cpu_has_ual)	seq_printf(m, " ual");
+	if (cpu_has_fpu)	seq_printf(m, " fpu");
+	if (cpu_has_lsx)	seq_printf(m, " lsx");
+	if (cpu_has_lasx)	seq_printf(m, " lasx");
+	if (cpu_has_complex)	seq_printf(m, " complex");
+	if (cpu_has_crypto)	seq_printf(m, " crypto");
+	if (cpu_has_lvz)	seq_printf(m, " lvz");
+	if (cpu_has_lbt_x86)	seq_printf(m, " lbt_x86");
+	if (cpu_has_lbt_arm)	seq_printf(m, " lbt_arm");
+	if (cpu_has_lbt_mips)	seq_printf(m, " lbt_mips");
 	seq_printf(m, "\n");
 
 	seq_printf(m, "Hardware Watchpoint\t: %s",

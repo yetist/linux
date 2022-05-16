@@ -21,11 +21,11 @@ static __always_inline long gettimeofday_fallback(
 	register struct __kernel_old_timeval *tv asm("a0") = _tv;
 	register struct timezone *tz asm("a1") = _tz;
 	register long nr asm("a7") = __NR_gettimeofday;
-	register long ret asm("v0");
+	register long ret asm("a0");
 
 	asm volatile(
 	"       syscall 0\n"
-	: "=r" (ret)
+	: "+r" (ret)
 	: "r" (nr), "r" (tv), "r" (tz)
 	: "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
 	  "$t8", "memory");
@@ -40,11 +40,11 @@ static __always_inline long clock_gettime_fallback(
 	register clockid_t clkid asm("a0") = _clkid;
 	register struct __kernel_timespec *ts asm("a1") = _ts;
 	register long nr asm("a7") = __NR_clock_gettime;
-	register long ret asm("v0");
+	register long ret asm("a0");
 
 	asm volatile(
 	"       syscall 0\n"
-	: "=r" (ret)
+	: "+r" (ret)
 	: "r" (nr), "r" (clkid), "r" (ts)
 	: "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
 	  "$t8", "memory");
@@ -59,11 +59,11 @@ static __always_inline int clock_getres_fallback(
 	register clockid_t clkid asm("a0") = _clkid;
 	register struct __kernel_timespec *ts asm("a1") = _ts;
 	register long nr asm("a7") = __NR_clock_getres;
-	register long ret asm("v0");
+	register long ret asm("a0");
 
 	asm volatile(
 	"       syscall 0\n"
-	: "=r" (ret)
+	: "+r" (ret)
 	: "r" (nr), "r" (clkid), "r" (ts)
 	: "$t0", "$t1", "$t2", "$t3", "$t4", "$t5", "$t6", "$t7",
 	  "$t8", "memory");

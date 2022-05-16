@@ -151,6 +151,9 @@ config LOCKDEP_SUPPORT
 	bool
 	default y
 
+# This symbol, and MACH_LOONGSON64, are delibrate carried over from the MIPS
+# Loongson code, to preserve Loongson-specific code paths in drivers that are
+# shared between architectures, and specifically expect the symbols.
 config MACH_LOONGSON32
 	def_bool 32BIT
 
@@ -204,7 +207,7 @@ config 4KB_3LEVEL
 	select PGTABLE_3LEVEL
 	help
 	  This option selects 4KB page size with 3 level page tables, which
-	  support a maximum of 39 bits application virtual memory.
+	  support a maximum of 39 bits of application virtual memory.
 
 config 4KB_4LEVEL
 	bool "4KB with 4 levels"
@@ -212,7 +215,7 @@ config 4KB_4LEVEL
 	select PGTABLE_4LEVEL
 	help
 	  This option selects 4KB page size with 4 level page tables, which
-	  support a maximum of 48 bits application virtual memory.
+	  support a maximum of 48 bits of application virtual memory.
 
 config 16KB_2LEVEL
 	bool "16KB with 2 levels"
@@ -220,7 +223,7 @@ config 16KB_2LEVEL
 	select PGTABLE_2LEVEL
 	help
 	  This option selects 16KB page size with 2 level page tables, which
-	  support a maximum of 36 bits application virtual memory.
+	  support a maximum of 36 bits of application virtual memory.
 
 config 16KB_3LEVEL
 	bool "16KB with 3 levels"
@@ -228,7 +231,7 @@ config 16KB_3LEVEL
 	select PGTABLE_3LEVEL
 	help
 	  This option selects 16KB page size with 3 level page tables, which
-	  support a maximum of 47 bits application virtual memory.
+	  support a maximum of 47 bits of application virtual memory.
 
 config 64KB_2LEVEL
 	bool "64KB with 2 levels"
@@ -236,7 +239,7 @@ config 64KB_2LEVEL
 	select PGTABLE_2LEVEL
 	help
 	  This option selects 64KB page size with 2 level page tables, which
-	  support a maximum of 42 bits application virtual memory.
+	  support a maximum of 42 bits of application virtual memory.
 
 config 64KB_3LEVEL
 	bool "64KB with 3 levels"
@@ -244,7 +247,7 @@ config 64KB_3LEVEL
 	select PGTABLE_3LEVEL
 	help
 	  This option selects 64KB page size with 3 level page tables, which
-	  support a maximum of 55 bits application virtual memory.
+	  support a maximum of 55 bits of application virtual memory.
 
 endchoice
 
@@ -296,10 +299,8 @@ config DMI
 	select DMI_SCAN_MACHINE_NON_EFI_FALLBACK
 	default y
 	help
-	  Enabled scanning of DMI to identify machine quirks. Say Y
-	  here unless you have verified that your setup is not
-	  affected by entries in the DMI blacklist. Required by PNP
-	  BIOS code.
+	  This enables SMBIOS/DMI feature for systems, and scanning of
+	  DMI to identify machine quirks.
 
 config EFI
 	bool "EFI runtime service support"
@@ -332,9 +333,6 @@ config SMP
 	  uniprocessor machines. On a uniprocessor machine, the kernel
 	  will run faster if you say N here.
 
-	  People using multiprocessor machines who say Y here should also say
-	  Y to "Enhanced Real Time Clock Support", below.
-
 	  See also the SMP-HOWTO available at
 	  <http://www.tldp.org/docs.html#howto>.
 
@@ -364,11 +362,10 @@ config NUMA
 	bool "NUMA Support"
 	select ACPI_NUMA if ACPI
 	help
-	  Say Y to compile the kernel to support NUMA (Non-Uniform Memory
-	  Access).  This option improves performance on systems with more
+	  Say Y to compile the kernel with NUMA (Non-Uniform Memory Access)
+	  support.  This option improves performance on systems with more
 	  than two nodes; on two node systems it is generally better to
-	  leave it disabled; on single node systems disable this option
-	  disabled.
+	  leave it disabled; disable this option on single node systems.
 
 config NODES_SHIFT
 	int

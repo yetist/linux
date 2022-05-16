@@ -1,8 +1,13 @@
 .. SPDX-License-Identifier: GPL-2.0
 
-================================
-LoongArch-specific Documentation
-================================
+.. include:: ./disclaimer-translation.rst
+
+:Original: Documentation/tranlations/zh_CN/loongarch/index.rst
+:Translator: Huacai Chen <chenhuacai@loongson.cn>
+
+======================
+LoongArch Architecture
+======================
 
 .. toctree::
    :maxdepth: 2

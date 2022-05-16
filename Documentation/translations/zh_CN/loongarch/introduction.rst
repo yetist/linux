@@ -1,19 +1,17 @@
 .. SPDX-License-Identifier: GPL-2.0
 
-.. include:: ../disclaimer-zh_CN.rst
-
-:Original: Documentation/loongarch/introduction.rst
-:Translator: Huacai Chen <chenhuacai@loongson.cn>
+.. include:: ./disclaimer-original.rst
 
 =============
 LoongArch介绍
 =============
 
-LoongArch是一种新的RISC ISA，在一定程度上类似于MIPS和RISC-V。LoongArch指令集
-包括一个精简32位版（LA32R）、一个标准32位版（LA32S）、一个64位版（LA64）。
-LoongArch有四个特权级（PLV0~PLV3），其中PLV0是最高特权级，用于内核；而PLV3是
-最低特权级，用于应用程序。本文档介绍了LoongArch的寄存器、基础指令集、虚拟内
-存以及其他一些主题。
+LoongArch是一种新的RISC ISA，在一定程度上类似于MIPS和RISC-V。
+LoongArch指令集包括一个精简32位版（LA32R）、一个标准32位版（LA32S）
+和一个64位版（LA64）。
+LoongArch定义了四个特权级，从高到低分别为PLV0~PLV3。
+内核运行在PLV0，应用程序运行在PLV3。
+本文档介绍了LoongArch的寄存器、基础指令集、虚拟内存以及其他一些主题。
 
 寄存器
 ======
@@ -24,57 +22,66 @@ LoongArch的寄存器包括通用寄存器（GPRs）、浮点寄存器（FPRs）
 通用寄存器
 ----------
 
-LoongArch包括32个通用寄存器（$r0 - $r31），LA32中每个寄存器为32位宽，LA64中
-每个寄存器为64位宽。$r0的内容总是0，而其他寄存器没有特殊功能。然而，我们有
-如下所示的一套ABI寄存器使用约定。
+LoongArch有32个通用寄存器（\ ``$r0`` ~ ``$r31``\ ）。
+LA32中每个寄存器为32位宽，LA64中每个寄存器为64位宽。
+``$r0``\ 的内容总是0，其他寄存器没有架构上的特殊功能
+（除\ ``$r1``\ 之外；它是 BL 指令隐含的链接寄存器）。
 
-================= =============== =================== ==========
-寄存器名          别名            用途                跨调用保持
-================= =============== =================== ==========
-``$r0``           ``$zero``       常量0               不使用
-``$r1``           ``$ra``         返回地址            否
-``$r2``           ``$tp``         TLS（线程局部存储） 不使用
-``$r3``           ``$sp``         栈指针              是
-``$r4``-``$r11``  ``$a0``-``$a7`` 参数寄存器          否
-``$r4``-``$r5``   ``$v0``-``$v1`` 返回值              否
-``$r12``-``$r20`` ``$t0``-``$t8`` 临时寄存器          否
-``$r21``          ``$u0``         保留                不使用
-``$r22``          ``$fp``         帧指针              是
-``$r23``-``$r31`` ``$s0``-``$s8`` 静态寄存器          是
-================= =============== =================== ==========
+LA64寄存器约定在\ :ref:`参考文献 <loongarch-references-zh_CN>`\ 一节的
+《龙芯架构ELF psABI文档》中详细描述。
+内核使用微调的LA64寄存器约定，如下：
 
-注意：v0/v1命名法已经废弃，请使用a0/a1。r21寄存器在Linux内核中命名
-为u0，用于保存每CPU变量基地址。
+=================== ================= =================== ==========
+寄存器名            别名              用途                跨调用保持
+=================== ================= =================== ==========
+``$r0``             ``$zero``         常量0               不使用
+``$r1``             ``$ra``           返回地址            否
+``$r2``             ``$tp``           线程指针            不使用
+``$r3``             ``$sp``           栈指针              是
+``$r4`` ~ ``$r11``  ``$a0`` ~ ``$a7`` 参数寄存器          否
+``$r12`` ~ ``$r20`` ``$t0`` ~ ``$t8`` 临时寄存器          否
+``$r21``            ``$u0``           percpu 基址         不使用
+``$r22``            ``$fp`` / ``$s9`` 帧指针或静态寄存器  是
+``$r23`` ~ ``$r31`` ``$s0`` ~ ``$s8`` 静态寄存器          是
+=================== ================= =================== ==========
+
+注意：\ ``$r21``\ 在ELF psABI中被保留，但内核将其用作percpu基址。
+该寄存器正常没有ABI别名，但内核中我们将它叫作\ ``$u0``\ 。
 
 浮点寄存器
 ----------
 
-LoongArch有32个浮点寄存器（$f0 - $f31），每个寄存器均为64位宽。我们同样
-有如下所示的一套ABI寄存器使用约定。
+当系统中存在FPU时，LoongArch有32个浮点寄存器（\ ``$f0`` ~ ``$f31``\ ）。
+LA464处理器核上每个浮点寄存器均为64位宽。
 
-================= ================== =================== ==========
-寄存器名          别名               用途                跨调用保持
-================= ================== =================== ==========
-``$f0``-``$f7``   ``$fa0``-``$fa7``  参数寄存器          否
-``$f0``-``$f1``   ``$fv0``-``$fv1``  返回值              否
-``$f8``-``$f23``  ``$ft0``-``$ft15`` 临时寄存器          否
-``$f24``-``$f31`` ``$fs0``-``$fs7``  静态寄存器          是
-================= ================== =================== ==========
+浮点寄存器约定与LoongArch ELF psABI文档描述一致：
 
-注意：fv0/fv1命名法已经废弃，请使用fa0/fa1。
+=================== ==================== =================== ==========
+寄存器名            别名                 用途                跨调用保持
+=================== ==================== =================== ==========
+``$f0`` ~ ``$f7``   ``$fa0`` ~ ``$fa7``  参数寄存器          否
+``$f8`` ~ ``$f23``  ``$ft0`` ~ ``$ft15`` 临时寄存器          否
+``$f24`` ~ ``$f31`` ``$fs0`` ~ ``$fs7``  静态寄存器          是
+=================== ==================== =================== ==========
 
 向量寄存器
 ----------
 
-LoongArch拥有128位向量扩展（LSX，全称Loongson SIMD eXtention）和256位向量扩展
-（LASX，全称Loongson Advanced SIMD eXtension）。共有32个向量寄存器，对于LSX是
-$v0 - $v31，对于LASX是$x0 - $x31。浮点寄存器和向量寄存器是复用的，比如：$x0的
-低128位是$v0，而$v0的低64位又是$f0，以此类推。
+目前LoongArch有两种向量扩展：
+
+- 向量宽度为128位的LSX（Loongson SIMD eXtension），
+- 向量宽度为256位的LASX（Loongson Advanced SIMD eXtension）。
+
+LSX带来\ ``$v0`` ~ ``$v31``\ 向量寄存器，而LASX则带来\ ``$x0`` ~ ``$x31``\ 。
+
+向量寄存器复用浮点寄存器：例如在实现了LSX与LASX的处理器核上，
+``$x0``\ 的低128位与\ ``$v0``\ 共享，而\ ``$v0``\ 的低64位又与\ ``$f0``\ 共享；
+以此类推。
 
 控制状态寄存器
 --------------
 
-控制状态寄存器只用于特权模式（PLV0）:
+控制状态寄存器只能从PLV0访问:
 
 ================= ==================================== ==========
 地址              全称描述                             简称
@@ -149,7 +156,7 @@ $v0 - $v31，对于LASX是$x0 - $x31。浮点寄存器和向量寄存器是复�
 0x502             调试数据保存                         DSAVE
 ================= ==================================== ==========
 
-ERA，TLBRERA，MERREEA和ERA有时也称为EPC，TLBREPC，MERREPC和DEPC。
+ERA、TLBRERA、MERRERA和DERA有时也叫EPC、TLBREPC、MERREPC和DEPC。
 
 基础指令集
 ==========
@@ -157,28 +164,33 @@ ERA，TLBRERA，MERREEA和ERA有时也称为EPC，TLBREPC，MERREPC和DEPC。
 指令格式
 --------
 
-LoongArch的指令字长为32位，一共有9种指令格式::
+LoongArch的指令字长为32位，一共有9种基本指令格式（及其变体）:
 
-  2R-type:    Opcode + Rj + Rd
-  3R-type:    Opcode + Rk + Rj + Rd
-  4R-type:    Opcode + Ra + Rk + Rj + Rd
-  2RI8-type:  Opcode + I8 + Rj + Rd
-  2RI12-type: Opcode + I12 + Rj + Rd
-  2RI14-type: Opcode + I14 + Rj + Rd
-  2RI16-type: Opcode + I16 + Rj + Rd
-  1RI21-type: Opcode + I21L + Rj + I21H
-  I26-type:   Opcode + I26L + I26H
+====== ==========================
+格式名 构成
+====== ==========================
+2R     Opcode + Rj + Rd
+3R     Opcode + Rk + Rj + Rd
+4R     Opcode + Ra + Rk + Rj + Rd
+2RI8   Opcode + I8 + Rj + Rd
+2RI12  Opcode + I12 + Rj + Rd
+2RI14  Opcode + I14 + Rj + Rd
+2RI16  Opcode + I16 + Rj + Rd
+1RI21  Opcode + I21L + Rj + I21H
+I26    Opcode + I26L + I26H
+====== ==========================
 
-Opcode是指令操作码，Rj和Rk是源操作数（寄存器），Rd是目标操作数（寄存器），Ra是
-4R-type格式特有的附加操作数（寄存器）。I8/I12/I16/I21/I26分别是8位/12位/16位/
-21位/26位的立即数。其中21位和26位立即数在指令字中被分割为高位部分与低位部分，
-所以你们在这里的格式描述中能够看到I21L/I21H和I26L/I26H这样的表述。
+Opcode是指令操作码，Rd是目标寄存器操作数，Rj、Rk、Ra（“a”意为“additional”）
+是源寄存器操作数。
+I8/I12/I16/I21/I26分别是相应宽度的立即数。
+其中较长的I21、I26在指令字中被分割为高位与低位两部分存储，
+在上表中以“L”、“H”的后缀表示。
 
-指令名称（助记符）
-------------------
+指令列表
+--------
 
-我们在此只简单罗列一下指令名称，详细信息请阅读 :ref:`参考文献 <loongarch-references>`
-中的文档。
+篇幅起见，在此只简单罗列指令助记符，详细信息请查阅
+:ref:`参考文献 <loongarch-references-zh_CN>`\ 中的文档。
 
 1. 算术运算指令::
 
@@ -188,14 +200,14 @@ Opcode是指令操作码，Rj和Rk是源操作数（寄存器），Rd是目标�
     MUL.W MULH.W MULH.WU DIV.W DIV.WU MOD.W MOD.WU
     MUL.D MULH.D MULH.DU DIV.D DIV.DU MOD.D MOD.DU
     PCADDI PCADDU12I PCADDU18I
-    LU12I.W LU32I.D LU52I.D ADDU16I.D
+    LU12I.W LU32I.D LU52I.D
 
 2. 移位运算指令::
 
     SLL.W SRL.W SRA.W ROTR.W SLLI.W SRLI.W SRAI.W ROTRI.W
     SLL.D SRL.D SRA.D ROTR.D SLLI.D SRLI.D SRAI.D ROTRI.D
 
-3. 位域操作指令::
+3. 位操作指令::
 
     EXT.W.B EXT.W.H CLO.W CLO.D SLZ.W CLZ.D CTO.W CTO.D CTZ.W CTZ.D
     BYTEPICK.W BYTEPICK.D BSTRINS.W BSTRINS.D BSTRPICK.W BSTRPICK.D
@@ -206,7 +218,7 @@ Opcode是指令操作码，Rj和Rk是源操作数（寄存器），Rd是目标�
 
     BEQ BNE BLT BGE BLTU BGEU BEQZ BNEZ B BL JIRL
 
-5. 访存读写指令::
+5. 访存指令::
 
     LD.B LD.BU LD.H LD.HU LD.W LD.WU LD.D ST.B ST.H ST.W ST.D
     LDX.B LDX.BU LDX.H LDX.HU LDX.W LDX.WU LDX.D STX.B STX.H STX.W STX.D
@@ -231,7 +243,7 @@ Opcode是指令操作码，Rj和Rk是源操作数（寄存器），Rd是目标�
 
     CSRRD CSRWR CSRXCHG
     IOCSRRD.B IOCSRRD.H IOCSRRD.W IOCSRRD.D IOCSRWR.B IOCSRWR.H IOCSRWR.W IOCSRWR.D
-    CACOP TLBP(TLBSRCH) TLBRD TLBWR TLBFILL TLBCLR TLBFLUSH INVTLB LDDIR LDPTE
+    CACOP TLBSRCH TLBRD TLBWR TLBFILL TLBCLR TLBFLUSH INVTLB LDDIR LDPTE
 
 虚拟内存
 ========
@@ -244,8 +256,8 @@ LoongArch可以使用直接映射虚拟内存和分页映射虚拟内存。
  VA = PA + 固定偏移
 
 分页映射的虚拟地址（VA）和物理地址（PA）有任意的映射关系，这种关系记录在TLB和页
-表中。LoongArch的TLB包括一个全相联的MTLB（Multiple Page Size TLB，页大小可变）
-和一个组相联的STLB（Single Page Size TLB，页大小固定）。
+表中。LoongArch的TLB包括一个全相联的MTLB（Multiple Page Size TLB，多样页大小TLB）
+和一个组相联的STLB（Single Page Size TLB，单一页大小TLB）。
 
 缺省状态下，LA32的整个虚拟地址空间配置如下：
 
@@ -259,8 +271,9 @@ LoongArch可以使用直接映射虚拟内存和分页映射虚拟内存。
 ============ =========================== ===========================
 
 用户态（PLV3）只能访问UVRANGE，对于直接映射的KPRANGE0和KPRANGE1，将虚拟地址的第
-30~31位清零就等于物理地址。例如：物理地址0x00001000对应的非缓存直接映射虚拟地址
-是0x80001000，而其可缓存直接映射虚拟地址是0xA0001000。
+30~31位清零就等于物理地址。
+例如：物理地址\ ``0x00001000``\ 对应的非缓存直接映射虚拟地址
+是\ ``0x80001000``\ ，而其可缓存直接映射虚拟地址是\ ``0xA0001000``\ 。
 
 缺省状态下，LA64的整个虚拟地址空间配置如下：
 
@@ -278,36 +291,28 @@ LoongArch可以使用直接映射虚拟内存和分页映射虚拟内存。
 ============ ====================== ==================================
 
 用户态（PLV3）只能访问XUVRANGE，对于直接映射的XSPRANGE和XKPRANGE，将虚拟地址的第
-60~63位清零就等于物理地址，而其缓存属性是通过虚拟地址的第60~61位配置的（0表示强序
-非缓存，1表示一致可缓存，2表示弱序非缓存）。目前，我们仅用XKPRANGE来进行直接映射，
-XSPRANGE保留给以后用。此处给出一个直接映射的例子：物理地址0x00000000 00001000的强
-序非缓存直接映射虚拟地址是0x80000000 00001000，其一致可缓存直接映射虚拟地址是
-0x90000000 00001000，而其弱序非缓存直接映射虚拟地址是0xA0000000 00001000。
+60~63位清零就等于物理地址，而其缓存属性是通过虚拟地址的第60~61位配置的：0表示强序
+非缓存，1表示一致可缓存，2表示弱序非缓存。目前，我们仅用XKPRANGE来进行直接映射，
+XSPRANGE保留给以后用。
+此处给出一个直接映射的例子：物理地址\ ``0x00000000_00001000``\ 的强序非缓存
+直接映射虚拟地址是\ ``0x80000000_00001000``\ ，其一致可缓存直接映射虚拟地址是
+``0x90000000_00001000``\ ，而其弱序非缓存直接映射虚拟地址是
+``0xA0000000_00001000``\ 。
 
-Loongson与LoongArch的关系
-=========================
-
-LoongArch是一种RISC指令集架构（ISA），不同于现存的任何一种ISA，而Loongson（即龙
-芯）是一个处理器家族。龙芯包括三个系列：Loongson-1（龙芯1号）是32位处理器系列，
-Loongson-2（龙芯2号）是低端64位处理器系列，而Loongson-3（龙芯3号）是高端64位处理
-器系列。旧的龙芯处理器基于MIPS架构，而新的龙芯处理器基于LoongArch架构。以龙芯3号
-为例：龙芯3A1000/3B1500/3A2000/3A3000/3A4000都是兼容MIPS的，而龙芯3A5000（以及将
-来的型号）都是基于LoongArch的。
-
-.. _loongarch-references:
+.. _loongarch-references-zh_CN:
 
 参考文献
 ========
 
-Loongson与LoongArch的官方网站（龙芯中科技术股份有限公司）：
+龙芯中科技术股份有限公司官网：
 
   http://www.loongson.cn/index.html
 
 Loongson与LoongArch的开发者网站（软件与文档资源）：
 
-  http://www.loongnix.cn/index.php
-
   https://github.com/loongson
+
+  https://loongson.github.io/LoongArch-Documentation/
 
 LoongArch指令集架构的文档：
 
@@ -315,7 +320,7 @@ LoongArch指令集架构的文档：
 
   https://github.com/loongson/LoongArch-Documentation/releases/latest/download/LoongArch-Vol1-v1.00-EN.pdf （英文版）
 
-LoongArch的ELF ABI文档：
+LoongArch的ELF psABI文档：
 
   https://github.com/loongson/LoongArch-Documentation/releases/latest/download/LoongArch-ELF-ABI-v1.00-CN.pdf （中文版）
 

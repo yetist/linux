@@ -11,7 +11,7 @@ void __init efi_init(void);
 void __init efi_runtime_init(void);
 void efifb_setup_from_dmi(struct screen_info *si, const char *opt);
 
-#define ARCH_EFI_IRQ_FLAGS_MASK  0x00000001  /*bit0: CP0 Status.IE*/
+#define ARCH_EFI_IRQ_FLAGS_MASK  0x00000004  /* bit 2: CSR.CRMD.IE */
 
 #define arch_efi_call_virt_setup()               \
 ({                                               \
