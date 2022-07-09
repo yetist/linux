@@ -527,6 +527,8 @@ static irqreturn_t pmu_handle_irq(int irq, void *dev)
 	HANDLE_COUNTER(2)
 	HANDLE_COUNTER(1)
 	HANDLE_COUNTER(0)
+	default:
+		break;
 	}
 
 	resume_local_counters();
