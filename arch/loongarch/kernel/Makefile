@@ -35,6 +35,8 @@ endif
 
 KASAN_SANITIZE_vdso.o := n
 
+obj-$(CONFIG_CPU_HAS_LBT)	+= lbt.o
+
 obj-$(CONFIG_MODULES)		+= module.o module-sections.o
 obj-$(CONFIG_STACKTRACE)	+= stacktrace.o
 
