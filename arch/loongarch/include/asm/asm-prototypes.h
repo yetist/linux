@@ -2,6 +2,7 @@
 #include <linux/uaccess.h>
 #include <asm/checksum.h>
 #include <asm/fpu.h>
+#include <asm/lbt.h>
 #include <asm/mmu_context.h>
 #include <asm/page.h>
 #include <asm/ftrace.h>
