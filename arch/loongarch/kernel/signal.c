@@ -444,8 +444,11 @@ static int protected_save_lsx_context(struct extctx_layout *extctx)
 		lock_fpu_owner();
 		if (is_lsx_enabled())
 			err = save_hw_lsx_context(lsx_ctx);
-		else
+		else {
+			if (is_fpu_owner())
+				save_fp(current);
 			err = copy_lsx_to_sigcontext(lsx_ctx);
+		}
 		unlock_fpu_owner();
 
 		err |= __put_user(LSX_CTX_MAGIC, &info->magic);
@@ -482,8 +485,11 @@ static int protected_restore_lsx_context(struct extctx_layout *extctx)
 		lock_fpu_owner();
 		if (is_lsx_enabled())
 			err = restore_hw_lsx_context(lsx_ctx);
-		else
+		else {
 			err = copy_lsx_from_sigcontext(lsx_ctx);
+			if (is_fpu_owner())
+				restore_fp(current);
+		}
 		unlock_fpu_owner();
 
 		if (likely(!err))
@@ -514,8 +520,13 @@ static int protected_save_lasx_context(struct extctx_layout *extctx)
 		lock_fpu_owner();
 		if (is_lasx_enabled())
 			err = save_hw_lasx_context(lasx_ctx);
-		else
+		else {
+			if (is_lsx_enabled())
+				save_lsx(current);
+			else if (is_fpu_owner())
+				save_fp(current);
 			err = copy_lasx_to_sigcontext(lasx_ctx);
+		}
 		unlock_fpu_owner();
 
 		err |= __put_user(LASX_CTX_MAGIC, &info->magic);
@@ -553,8 +564,13 @@ static int protected_restore_lasx_context(struct extctx_layout *extctx)
 		lock_fpu_owner();
 		if (is_lasx_enabled())
 			err = restore_hw_lasx_context(lasx_ctx);
-		else
+		else {
 			err = copy_lasx_from_sigcontext(lasx_ctx);
+			if (is_lsx_enabled())
+				restore_lsx(current);
+			else if (is_fpu_owner())
+				restore_fp(current);
+		}
 		unlock_fpu_owner();
 
 		if (likely(!err))
