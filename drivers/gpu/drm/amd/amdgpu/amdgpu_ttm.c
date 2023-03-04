@@ -1750,8 +1750,13 @@ int amdgpu_ttm_init(struct amdgpu_device *adev)
 
 	else
 #endif
+#ifdef CONFIG_LOONGARCH
+		adev->mman.aper_base_kaddr = ioremap(adev->gmc.aper_base,
+				adev->gmc.visible_vram_size);
+#else
 		adev->mman.aper_base_kaddr = ioremap_wc(adev->gmc.aper_base,
 				adev->gmc.visible_vram_size);
+#endif
 #endif
 
 	/*
