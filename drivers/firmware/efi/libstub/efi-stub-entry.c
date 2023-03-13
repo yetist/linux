@@ -5,6 +5,17 @@
 
 #include "efistub.h"
 
+static struct screen_info *si;
+
+struct screen_info *alloc_screen_info(void)
+{
+	return si;
+}
+
+void free_screen_info(struct screen_info *si)
+{
+}
+
 /*
  * EFI entry point for the generic EFI stub used by ARM, arm64, RISC-V and
  * LoongArch. This is the entrypoint that is described in the PE/COFF header
@@ -55,6 +66,9 @@ efi_status_t __efiapi efi_pe_entry(efi_handle_t handle,
 		efi_err("Failed to relocate kernel\n");
 		return status;
 	}
+
+	/* point si to the relocated copy of struct screen_info */
+	si = (void *)&screen_info + image_addr - (unsigned long)image->image_base;
 
 	status = efi_stub_common(handle, image, image_addr, cmdline_ptr);
 
