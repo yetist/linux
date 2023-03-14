@@ -721,6 +721,7 @@ static int hw_break_set(struct task_struct *target,
 
 	return 0;
 }
+#endif
 
 #ifdef CONFIG_CPU_HAS_LBT
 static int lbt_get(struct task_struct *target,
