@@ -1,4 +1,4 @@
 # SPDX-License-Identifier: GPL-2.0-only
-subdir-y	+= loongson
+dtstree	:= $(srctree)/$(src)
 
-obj-$(CONFIG_BUILTIN_DTB)	:= $(addsuffix /, $(subdir-y))
+dtb-y := $(patsubst $(dtstree)/%.dts,%.dtb, $(wildcard $(dtstree)/*.dts))
