@@ -299,12 +299,15 @@ static const struct irq_domain_ops eiointc_domain_ops = {
 	.free		= eiointc_domain_free,
 };
 
-static void acpi_set_vec_parent(int node, struct irq_domain *parent, struct acpi_vector_group *vec_group)
+static void acpi_set_vec_parent(int node, bool is_eio_node, struct irq_domain *parent, struct acpi_vector_group *vec_group)
 {
 	int i;
 
-	if (cpu_has_flatmode)
-		node = cpu_to_node(node * CORES_PER_EIO_NODE);
+	if (is_eio_node) {
+		if (cpu_has_flatmode) {
+			node = cpu_to_node(node * CORES_PER_EIO_NODE);
+		}
+	}
 
 	for (i = 0; i < MAX_IO_PICS; i++) {
 		if (node == vec_group[i].node) {
@@ -314,14 +317,16 @@ static void acpi_set_vec_parent(int node, struct irq_domain *parent, struct acpi
 	}
 }
 
-static struct irq_domain *acpi_get_vec_parent(int node, struct acpi_vector_group *vec_group)
+static struct irq_domain *acpi_get_vec_parent(int node, bool is_eio_node, struct acpi_vector_group *vec_group)
 {
-	int i;
-
-	for (i = 0; i < MAX_IO_PICS; i++) {
-		if (node == vec_group[i].node)
-			return vec_group[i].parent;
+	if (is_eio_node) {
+		if (cpu_has_flatmode) {
+			node = cpu_to_node(node * CORES_PER_EIO_NODE);
+		}
 	}
+
+	if (node == vec_group->node)
+		return vec_group->parent;
 	return NULL;
 }
 
@@ -361,24 +366,24 @@ static int __init pch_pic_parse_madt(union acpi_subtable_headers *header,
 {
 	struct acpi_madt_bio_pic *pchpic_entry = (struct acpi_madt_bio_pic *)header;
 	unsigned int node = (pchpic_entry->address >> 44) & 0xf;
-	struct irq_domain *parent = acpi_get_vec_parent(node, pch_group);
+	struct irq_domain *parent = acpi_get_vec_parent(node, 0, pch_group + (nr_pics - 1));
 
 	if (parent)
 		return pch_pic_acpi_init(parent, pchpic_entry);
 
-	return -EINVAL;
+	return 0;
 }
 
 static int __init pch_msi_parse_madt(union acpi_subtable_headers *header,
 					const unsigned long end)
 {
 	struct acpi_madt_msi_pic *pchmsi_entry = (struct acpi_madt_msi_pic *)header;
-	struct irq_domain *parent = acpi_get_vec_parent(eiointc_priv[nr_pics - 1]->node, msi_group);
+	struct irq_domain *parent = acpi_get_vec_parent(eiointc_priv[nr_pics - 1]->node, 1, msi_group + (nr_pics - 1));
 
 	if (parent)
 		return pch_msi_acpi_init(parent, pchmsi_entry);
 
-	return -EINVAL;
+	return 0;
 }
 
 static int __init acpi_cascade_irqdomain_init(void)
@@ -444,8 +449,8 @@ int __init eiointc_acpi_init(struct irq_domain *parent,
 				  "irqchip/loongarch/intc:starting",
 				  eiointc_router_init, NULL);
 
-	acpi_set_vec_parent(acpi_eiointc->node, priv->eiointc_domain, pch_group);
-	acpi_set_vec_parent(acpi_eiointc->node, priv->eiointc_domain, msi_group);
+	acpi_set_vec_parent(acpi_eiointc->node, 1, priv->eiointc_domain, pch_group);
+	acpi_set_vec_parent(acpi_eiointc->node, 1, priv->eiointc_domain, msi_group);
 	ret = acpi_cascade_irqdomain_init();
 
 	return ret;
