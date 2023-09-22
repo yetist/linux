@@ -270,6 +270,8 @@ source "drivers/gpu/drm/i915/Kconfig"
 
 source "drivers/gpu/drm/kmb/Kconfig"
 
+source "drivers/gpu/drm/gsgpu/gpu/Kconfig"
+
 config DRM_VGEM
 	tristate "Virtual GEM provider"
 	depends on DRM && MMU
