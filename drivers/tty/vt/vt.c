@@ -300,6 +300,13 @@ static inline unsigned short *screenpos(const struct vc_data *vc, int offset,
 	return p;
 }
 
+static inline u16 *screenpos_utf8(const struct vc_data *vc, int offset, bool viewed)
+{
+	unsigned long origin = viewed ? vc->vc_visible_origin : vc->vc_origin;
+
+	return (u16 *)(origin + offset + vc->vc_screenbuf_size);
+}
+
 /* Called  from the keyboard irq path.. */
 static inline void scrolldelta(int lines)
 {
