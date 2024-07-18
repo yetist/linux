@@ -3896,6 +3896,13 @@ check_restart_area:
 		goto out;
 	}
 
+	if (log->rst_info.r_page->sys_page_size != PAGE_SIZE) {
+		sbi->sb->s_flags |= SB_RDONLY;
+		pr_info("Fallback to read-only because PAGE_SIZE doesn't match LogFile.\n");
+		pr_info("You can use 'ntfsrecover /dev/sdxy' to reply the log and then mount again.\n");
+		goto out;
+	}
+
 	/*
 	 * If the log page or the system page sizes have changed, we can't
 	 * use the log file. We must use the system page size instead of the
